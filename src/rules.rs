@@ -1,5 +1,6 @@
 //! Rule definition, TOML parsing, and directory loading with id override.
 
+use std::fmt;
 use std::path::PathBuf;
 
 use serde::Deserialize;
@@ -38,7 +39,19 @@ pub enum Severity {
     Critical,
 }
 
-#[derive(Debug, PartialEq)]
+impl fmt::Display for Severity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Severity::Low => "low",
+            Severity::Medium => "medium",
+            Severity::High => "high",
+            Severity::Critical => "critical",
+        };
+        f.write_str(s)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Rule {
     pub id: String,
     pub description: String,
@@ -105,16 +118,51 @@ pub fn load_rules(dirs: &[PathBuf]) -> anyhow::Result<Vec<Rule>> {
     Ok(merge_by_id(rules))
 }
 
-/// Compiled rule set. Matching logic lands in Task 1.3.
-#[derive(Debug, Default, PartialEq)]
+/// Compiled rule set: precomputed matchers, first match wins.
+#[derive(Debug, Default)]
 pub struct Ruleset {
     pub rules: Vec<Rule>,
+    pub compiled: Vec<CompiledRule>,
+}
+
+/// A rule with its matchers precompiled once at load time.
+#[derive(Debug)]
+pub struct CompiledRule {
+    pub rule: Rule,
+    pub paths: globset::GlobSet,
+    pub commands: regex::RegexSet,
 }
 
 impl Ruleset {
+    /// Compile the given rules into matchers. File order = priority.
     pub fn compile(rules: Vec<Rule>) -> Ruleset {
-        Ruleset { rules }
+        let compiled = rules
+            .iter()
+            .map(|r| CompiledRule {
+                rule: r.clone(),
+                paths: compile_globs(&r.paths),
+                commands: compile_regexes(&r.commands),
+            })
+            .collect();
+        Ruleset { rules, compiled }
     }
+}
+
+fn compile_globs(patterns: &[String]) -> globset::GlobSet {
+    let mut builder = globset::GlobSetBuilder::new();
+    for p in patterns {
+        if let Ok(glob) = globset::Glob::new(p) {
+            builder.add(glob);
+        }
+    }
+    builder
+        .build()
+        .unwrap_or_else(|_| globset::GlobSet::empty())
+}
+
+fn compile_regexes(patterns: &[String]) -> regex::RegexSet {
+    regex::RegexSet::new(patterns.iter().map(String::as_str))
+        .unwrap_or_else(|_| regex::RegexSet::empty())
 }
 
 #[cfg(test)]

@@ -17,7 +17,7 @@ pub struct Event {
     pub session: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Action {
     Read,
@@ -25,6 +25,19 @@ pub enum Action {
     Search,
     Exec,
     Net,
+}
+
+impl std::fmt::Display for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Action::Read => "read",
+            Action::Write => "write",
+            Action::Search => "search",
+            Action::Exec => "exec",
+            Action::Net => "net",
+        };
+        f.write_str(s)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -35,7 +48,7 @@ pub struct Verdict {
     pub masked_paths: Vec<PathBuf>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum VerdictAction {
     Deny,

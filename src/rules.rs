@@ -81,12 +81,19 @@ fn merge_by_id(rules: Vec<Rule>) -> Vec<Rule> {
 }
 
 /// Load `*.toml` rule files from each dir (sorted by filename); later dirs
-/// override earlier by id.
+/// override earlier by id. Missing dirs are treated as empty.
 pub fn load_rules(dirs: &[PathBuf]) -> anyhow::Result<Vec<Rule>> {
     let mut rules = Vec::new();
     for dir in dirs {
-        let mut entries: Vec<PathBuf> = std::fs::read_dir(dir)?
-            .filter_map(|e| e.ok().map(|e| e.path()))
+        let read_dir = match std::fs::read_dir(dir) {
+            Ok(rd) => rd,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(e) => return Err(e.into()),
+        };
+        let mut entries: Vec<PathBuf> = read_dir
+            .collect::<std::io::Result<Vec<_>>>()?
+            .into_iter()
+            .map(|e| e.path())
             .filter(|p| p.extension().is_some_and(|ext| ext == "toml"))
             .collect();
         entries.sort();
@@ -96,6 +103,18 @@ pub fn load_rules(dirs: &[PathBuf]) -> anyhow::Result<Vec<Rule>> {
         }
     }
     Ok(merge_by_id(rules))
+}
+
+/// Compiled rule set. Matching logic lands in Task 1.3.
+#[derive(Debug, Default, PartialEq)]
+pub struct Ruleset {
+    pub rules: Vec<Rule>,
+}
+
+impl Ruleset {
+    pub fn compile(rules: Vec<Rule>) -> Ruleset {
+        Ruleset { rules }
+    }
 }
 
 #[cfg(test)]
@@ -123,10 +142,38 @@ mod tests {
         assert_eq!(merged.len(), 1);
     }
 
+    #[test]
+    fn compile_preserves_rules() {
+        let ruleset = Ruleset::compile(vec![rule("x", "deny"), rule("y", "warn")]);
+        assert_eq!(ruleset.rules.len(), 2);
+        assert_eq!(ruleset.rules[0].id, "x");
+        assert_eq!(ruleset.rules[1].id, "y");
+    }
+
+    #[test]
+    fn load_rules_skips_missing_dir_and_sorts_files() {
+        let dir = std::env::temp_dir().join(format!("vigil-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("b.toml"), rule_toml("b", "deny")).unwrap();
+        std::fs::write(dir.join("a.toml"), rule_toml("a", "warn")).unwrap();
+        std::fs::write(dir.join("ignored.txt"), "not toml").unwrap();
+
+        let missing = dir.join("does-not-exist");
+        let rules = load_rules(&[missing, dir.clone()]).unwrap();
+
+        assert_eq!(rules.len(), 2);
+        assert_eq!(rules[0].id, "a"); // a.toml sorts before b.toml
+        assert_eq!(rules[0].action, VerdictAction::Warn);
+        assert_eq!(rules[1].id, "b");
+
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    fn rule_toml(id: &str, action: &str) -> String {
+        format!("id = \"{id}\"\nscope = [\"read\"]\npaths = [\"**/.env\"]\naction = \"{action}\"")
+    }
+
     fn rule(id: &str, action: &str) -> Rule {
-        Rule::parse_toml(&format!(
-            "id = \"{id}\"\nscope = [\"read\"]\npaths = [\"**/.env\"]\naction = \"{action}\""
-        ))
-        .unwrap()
+        Rule::parse_toml(&rule_toml(id, action)).unwrap()
     }
 }

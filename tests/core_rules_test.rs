@@ -82,6 +82,12 @@ fn builtin_rules_deny_destructive_exec() {
         VerdictAction::Warn,
         "home recursive delete must warn, not deny"
     );
+    let deep_delete = rs.evaluate(&ev_cmd(Action::Exec, "rm -rf /home/u/tmp"), Mode::Enforce);
+    assert_eq!(
+        deep_delete.action,
+        VerdictAction::Warn,
+        "delete below home must warn, not be denied as root delete"
+    );
 }
 
 #[test]

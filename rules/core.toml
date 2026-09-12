@@ -89,11 +89,14 @@ description = "Block recursive deletion of filesystem root"
 # Coverage: short flags with r and/or f (`rm -rf /`), long flags
 # (`rm --recursive /`), flag clusters containing other flags
 # (`rm -rf --no-preserve-root /`), and unexpanded-glob targets
-# (`rm -rf /*`, also under sudo). Flag clusters must contain an
-# r or f somewhere; `rm --help /` style false negatives accepted.
+# (`rm -rf /*`, also under sudo). Target is deliberately narrowed to
+# bare root forms (`/` and `/*`) so deeper paths like `/home/u/tmp`
+# fall through to the warn-level home-delete rule below
+# (first-match-wins). Flag clusters must contain an r or f somewhere;
+# `rm --help /` style false negatives accepted.
 scope = ["exec"]
 paths = []
-commands = ["rm\\s+(-{1,2}[a-zA-Z-]*[rf][a-zA-Z-]*\\s+)+/\\S*\\s*$", "(^|\\s)sudo\\s+rm\\s+.*\\s+/\\S*\\s*$"]
+commands = ["rm\\s+(-{1,2}[a-zA-Z-]*[rf][a-zA-Z-]*\\s+)+/\\*?\\s*$", "(^|\\s)sudo\\s+rm\\s+.*\\s+/\\*?\\s*$"]
 action = "deny"
 severity = "critical"
 enabled = true

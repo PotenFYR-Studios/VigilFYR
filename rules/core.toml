@@ -1,0 +1,144 @@
+# vigil built-in core ruleset. Embedded in the binary via include_str!;
+# users override by id from ~/.vigil/rules/*.toml or ./.vigil/rules/*.toml.
+# Rule order = priority: first matching rule wins, keep most specific first.
+
+[[rule]]
+id = "deny-env-files"
+description = "Block reads, searches, and writes of env files"
+scope = ["read", "search", "write"]
+paths = ["**/.env", "**/.env.*"]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-secrets-dir"
+description = "Block any access to secrets directories"
+scope = ["read", "search", "write"]
+paths = ["**/secrets/**"]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-key-files"
+description = "Block access to private keys and certificates"
+scope = ["read", "search", "write"]
+paths = ["**/*.pem", "**/*.key", "**/id_rsa*", "**/id_ed25519*", "**/id_ecdsa*"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-ssh-dir"
+description = "Block access to the SSH configuration directory"
+scope = ["read", "search", "write"]
+paths = ["**/.ssh/**"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-aws-dir"
+description = "Block access to AWS credentials directory"
+scope = ["read", "search", "write"]
+paths = ["**/.aws/**"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-gnupg-dir"
+description = "Block access to the GnuPG keyring directory"
+scope = ["read", "search", "write"]
+paths = ["**/.gnupg/**"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-wallet-dirs"
+description = "Block access to cryptocurrency wallet directories"
+scope = ["read", "search", "write"]
+paths = ["**/.electrum/**", "**/Electrum/**", "**/.monero/**", "**/Wallets/**"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-credentials-files"
+description = "Block access to credentials files anywhere"
+scope = ["read", "search", "write"]
+paths = ["**/credentials*", "**/.npmrc", "**/.netrc", "**/.pypirc"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-etc-passwd-read"
+description = "Block reads of system account databases"
+scope = ["read"]
+paths = ["/etc/passwd", "/etc/shadow", "/etc/sudoers"]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-exec-root-recursive-delete"
+description = "Block recursive deletion of filesystem root"
+scope = ["exec"]
+paths = []
+commands = ["rm\\s+(-[a-zA-Z]*[rf][a-zA-Z]*\\s+)+/\\s*$", "(^|\\s)sudo\\s+rm\\s+.*\\s+/\\s*$"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-sudo-system-write"
+description = "Block sudo writes into system directories"
+scope = ["exec"]
+paths = []
+commands = ["sudo\\s+\\S+\\s+(/etc/|/usr/|/boot/|/etc\\\\|C:\\\\Windows)", "sudo\\s+.*\\s+(>>?|tee)\\s+/(etc|usr|boot)/"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "warn-exec-home-recursive-delete"
+description = "Warn on recursive deletion targeting the home directory"
+scope = ["exec"]
+paths = []
+commands = ["rm\\s+(-[a-zA-Z]*[rf][a-zA-Z]*\\s+)+(~|\\$HOME|/home/)", "(^|\\s)sudo\\s+rm\\s+.*\\s+(~|\\$HOME|/home/)"]
+action = "warn"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "warn-exec-windows-system-delete"
+description = "Warn on deletes targeting Windows system directories"
+scope = ["exec"]
+paths = []
+commands = ["(?i)(rd|rmdir|del)\\s+.*c:\\\\windows"]
+action = "warn"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-net-metadata-services"
+description = "Block network calls to cloud metadata endpoints"
+scope = ["net"]
+paths = []
+commands = ["169\\.254\\.169\\.254", "metadata\\.google\\.internal"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "warn-net-curl-pipe-shell"
+description = "Warn on curl|wget output piped into a shell"
+scope = ["net"]
+paths = []
+commands = ["(?i)\\b(curl|wget)\\b[^|]*\\|\\s*(ba|z|f)?sh"]
+action = "warn"
+severity = "high"
+enabled = true

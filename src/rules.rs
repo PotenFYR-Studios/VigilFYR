@@ -66,19 +66,36 @@ pub struct Rule {
 
 impl Rule {
     pub fn parse_toml(s: &str) -> anyhow::Result<Rule> {
-        let t: RuleToml = toml::from_str(s)?;
-        Ok(Rule {
-            id: t.id,
-            description: t.description,
-            scope: t.scope,
-            paths: t.paths,
-            commands: t.commands,
-            agents: t.agents,
-            action: t.action,
-            severity: t.severity,
-            enabled: t.enabled,
-        })
+        Ok(toml::from_str::<RuleToml>(s)?.into_rule())
     }
+}
+
+impl RuleToml {
+    fn into_rule(self) -> Rule {
+        Rule {
+            id: self.id,
+            description: self.description,
+            scope: self.scope,
+            paths: self.paths,
+            commands: self.commands,
+            agents: self.agents,
+            action: self.action,
+            severity: self.severity,
+            enabled: self.enabled,
+        }
+    }
+}
+
+/// Built-in rules embedded at compile time from `rules/core.toml`.
+pub fn builtin_rules() -> Vec<Rule> {
+    #[derive(Deserialize)]
+    struct CoreFile {
+        #[serde(default)]
+        rule: Vec<RuleToml>,
+    }
+    let file: CoreFile = toml::from_str(include_str!("../rules/core.toml"))
+        .expect("embedded rules/core.toml must be valid");
+    file.rule.into_iter().map(RuleToml::into_rule).collect()
 }
 
 /// Merge rules by id: later wins, keeps position of first occurrence.

@@ -35,7 +35,7 @@ pub struct Verdict {
     pub masked_paths: Vec<PathBuf>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum VerdictAction {
     Deny,

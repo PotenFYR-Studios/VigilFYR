@@ -86,9 +86,14 @@ enabled = true
 [[rule]]
 id = "deny-exec-root-recursive-delete"
 description = "Block recursive deletion of filesystem root"
+# Coverage: short flags with r and/or f (`rm -rf /`), long flags
+# (`rm --recursive /`), flag clusters containing other flags
+# (`rm -rf --no-preserve-root /`), and unexpanded-glob targets
+# (`rm -rf /*`, also under sudo). Flag clusters must contain an
+# r or f somewhere; `rm --help /` style false negatives accepted.
 scope = ["exec"]
 paths = []
-commands = ["rm\\s+(-[a-zA-Z]*[rf][a-zA-Z]*\\s+)+/\\s*$", "(^|\\s)sudo\\s+rm\\s+.*\\s+/\\s*$"]
+commands = ["rm\\s+(-{1,2}[a-zA-Z-]*[rf][a-zA-Z-]*\\s+)+/\\S*\\s*$", "(^|\\s)sudo\\s+rm\\s+.*\\s+/\\S*\\s*$"]
 action = "deny"
 severity = "critical"
 enabled = true
@@ -96,9 +101,13 @@ enabled = true
 [[rule]]
 id = "deny-exec-sudo-system-write"
 description = "Block sudo writes into system directories"
+# Coverage: any sudo invocation whose arguments end in a system path
+# (`sudo cp/mv/install <file> /etc/...`; read overblocking like
+# `sudo cat /etc/passwd` accepted), direct output redirection, and
+# `sudo tee` into a system path.
 scope = ["exec"]
 paths = []
-commands = ["sudo\\s+\\S+\\s+(/etc/|/usr/|/boot/|/etc\\\\|C:\\\\Windows)", "sudo\\s+.*\\s+(>>?|tee)\\s+/(etc|usr|boot)/"]
+commands = ["sudo\\s+\\S+\\s+(/etc/|/usr/|/boot/|/etc\\\\|C:\\\\Windows)", "sudo\\s+.*\\s+(>>?|tee)\\s+/(etc|usr|boot)/", "sudo\\s+.*\\s+/(etc|usr|boot)/"]
 action = "deny"
 severity = "critical"
 enabled = true

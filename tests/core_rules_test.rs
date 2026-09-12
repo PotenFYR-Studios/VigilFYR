@@ -83,3 +83,30 @@ fn builtin_rules_deny_destructive_exec() {
         "home recursive delete must warn, not deny"
     );
 }
+
+#[test]
+fn builtin_rules_deny_root_delete_variants() {
+    let rs = Ruleset::compile(builtin_rules());
+    for cmd in [
+        "rm -rf /*",
+        "rm --recursive /",
+        "rm -rf --no-preserve-root /",
+        "sudo rm -rf /*",
+    ] {
+        let v = rs.evaluate(&ev_cmd(Action::Exec, cmd), Mode::Enforce);
+        assert_eq!(v.action, VerdictAction::Deny, "must deny exec of {cmd}");
+    }
+}
+
+#[test]
+fn builtin_rules_deny_sudo_copy_into_system_dir() {
+    let rs = Ruleset::compile(builtin_rules());
+    for cmd in [
+        "sudo cp payload /etc/hosts",
+        "sudo mv evil /usr/bin/vigil-backdoor",
+        "sudo install -m 755 x /boot/vmlinuz.bak",
+    ] {
+        let v = rs.evaluate(&ev_cmd(Action::Exec, cmd), Mode::Enforce);
+        assert_eq!(v.action, VerdictAction::Deny, "must deny exec of {cmd}");
+    }
+}

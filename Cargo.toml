@@ -1,0 +1,16 @@
+[package]
+name = "vigil"
+version = "0.1.0"
+edition = "2021"
+description = "VigilFYR: failover-ready CLI tool"
+
+[[bin]]
+name = "vigil"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }

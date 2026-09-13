@@ -139,14 +139,28 @@ impl Default for Masking {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Rules {
     pub remote_update: bool,
+    #[serde(default = "default_retention_days")]
+    pub retention_days: u32,
+    #[serde(default = "default_max_events")]
+    pub max_events: usize,
 }
 
 impl Default for Rules {
     fn default() -> Self {
         Rules {
             remote_update: true,
+            retention_days: default_retention_days(),
+            max_events: default_max_events(),
         }
     }
+}
+
+fn default_retention_days() -> u32 {
+    30
+}
+
+fn default_max_events() -> usize {
+    100_000
 }
 
 fn default_agents() -> HashMap<String, AgentMode> {
@@ -242,6 +256,17 @@ impl Config {
             }
             "masking.enabled" => self.masking.enabled = parse_bool(dotted_key, value)?,
             "rules.remote_update" => self.rules.remote_update = parse_bool(dotted_key, value)?,
+            "rules.retention_days" => {
+                let days = parse_u32(dotted_key, value)?;
+                if days == 0 {
+                    return Err(ConfigError::InvalidValue {
+                        key: dotted_key.to_string(),
+                        value: value.to_string(),
+                    });
+                }
+                self.rules.retention_days = days;
+            }
+            "rules.max_events" => self.rules.max_events = parse_usize(dotted_key, value)?,
             other if other.starts_with("agents.") => {
                 let id = other.trim_start_matches("agents.");
                 if id.is_empty() {
@@ -269,6 +294,8 @@ impl Config {
             "daemon.autostart_enabled" => Ok(self.daemon.autostart_enabled.to_string()),
             "masking.enabled" => Ok(self.masking.enabled.to_string()),
             "rules.remote_update" => Ok(self.rules.remote_update.to_string()),
+            "rules.retention_days" => Ok(self.rules.retention_days.to_string()),
+            "rules.max_events" => Ok(self.rules.max_events.to_string()),
             other if other.starts_with("agents.") => {
                 let id = other.trim_start_matches("agents.");
                 match self.agents.get(id) {
@@ -284,6 +311,22 @@ impl Config {
 fn parse_bool(key: &str, value: &str) -> Result<bool, ConfigError> {
     value
         .parse::<bool>()
+        .map_err(|_| ConfigError::InvalidValue {
+            key: key.to_string(),
+            value: value.to_string(),
+        })
+}
+
+fn parse_u32(key: &str, value: &str) -> Result<u32, ConfigError> {
+    value.parse::<u32>().map_err(|_| ConfigError::InvalidValue {
+        key: key.to_string(),
+        value: value.to_string(),
+    })
+}
+
+fn parse_usize(key: &str, value: &str) -> Result<usize, ConfigError> {
+    value
+        .parse::<usize>()
         .map_err(|_| ConfigError::InvalidValue {
             key: key.to_string(),
             value: value.to_string(),

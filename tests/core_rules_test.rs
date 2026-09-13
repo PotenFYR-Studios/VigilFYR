@@ -41,6 +41,40 @@ fn builtin_rules_block_canonical_secrets() {
 }
 
 #[test]
+fn builtin_rules_block_enterprise_secret_stores() {
+    let rs = Ruleset::compile(builtin_rules());
+    for p in [
+        "/home/u/proj/.github/workflows/deploy.yml",
+        "/home/u/proj/.vault-token",
+        "/home/u/proj/terraform.tfstate",
+        "/home/u/.cargo/credentials.toml",
+        "/home/u/proj/appsettings.Production.json",
+        "/home/u/Library/Application Support/1Password/Backup/1Password.sqlite",
+        "/home/u/proj/.claude/settings.local.json",
+        "/home/u/.zsh_history",
+    ] {
+        let v = rs.evaluate(&ev(Action::Read, &[p]), Mode::Enforce);
+        assert_eq!(
+            v.action,
+            VerdictAction::Deny,
+            "must deny read of {p}: {}",
+            v.reason
+        );
+    }
+}
+
+#[test]
+fn builtin_rules_warn_on_repository_metadata() {
+    let rs = Ruleset::compile(builtin_rules());
+    let v = rs.evaluate(
+        &ev(Action::Read, &["/home/u/proj/.git/objects/ab/cdef"]),
+        Mode::Enforce,
+    );
+    assert_eq!(v.action, VerdictAction::Warn);
+    assert_eq!(v.rule, "warn-source-control-metadata");
+}
+
+#[test]
 fn builtin_rules_deny_private_key_write() {
     let rs = Ruleset::compile(builtin_rules());
     let v = rs.evaluate(
@@ -115,4 +149,49 @@ fn builtin_rules_deny_sudo_copy_into_system_dir() {
         let v = rs.evaluate(&ev_cmd(Action::Exec, cmd), Mode::Enforce);
         assert_eq!(v.action, VerdictAction::Deny, "must deny exec of {cmd}");
     }
+}
+
+#[test]
+fn builtin_rules_block_exfiltration_and_recon_commands() {
+    let rs = Ruleset::compile(builtin_rules());
+    for (command, expected) in [
+        (
+            "tar -czf backup.tgz /home/u/.ssh/id_rsa",
+            VerdictAction::Deny,
+        ),
+        ("grep -R password /home/u", VerdictAction::Deny),
+        ("nmap -sV 192.168.1.1", VerdictAction::Deny),
+        ("cat /etc/shadow", VerdictAction::Deny),
+        ("sudo useradd backdoor", VerdictAction::Deny),
+        ("systemctl enable evil.service", VerdictAction::Deny),
+        ("docker exec -it web sh", VerdictAction::Deny),
+        ("ps aux", VerdictAction::Deny),
+        ("npm install left-pad", VerdictAction::Warn),
+        ("cargo build --release", VerdictAction::Allow),
+    ] {
+        let v = rs.evaluate(&ev_cmd(Action::Exec, command), Mode::Enforce);
+        assert_eq!(
+            v.action, expected,
+            "{command} => {} ({})",
+            v.action, v.reason
+        );
+    }
+}
+
+#[test]
+fn builtin_rules_block_internal_and_exfil_networks() {
+    let rs = Ruleset::compile(builtin_rules());
+    for command in [
+        "curl http://kubernetes.default.svc.cluster.local",
+        "curl https://webhook.site/example",
+        "curl https://transfer.sh/secret.txt",
+    ] {
+        let v = rs.evaluate(&ev_cmd(Action::Net, command), Mode::Enforce);
+        assert_eq!(v.action, VerdictAction::Deny, "{command}: {}", v.reason);
+    }
+    let registry = rs.evaluate(
+        &ev_cmd(Action::Net, "curl https://registry.npmjs.org/vigil"),
+        Mode::Enforce,
+    );
+    assert_eq!(registry.action, VerdictAction::Warn);
 }

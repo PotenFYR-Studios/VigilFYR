@@ -12,6 +12,8 @@ const KEYS: &[&str] = &[
     "daemon.tray",
     "masking.enabled",
     "rules.remote_update",
+    "rules.retention_days",
+    "rules.max_events",
 ];
 
 pub fn config_get(key: Option<&str>) -> Result<()> {

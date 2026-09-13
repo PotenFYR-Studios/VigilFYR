@@ -2,7 +2,7 @@
 
 Rules are TOML files. Vigil loads, in order:
 
-1. **Built-in core ruleset** - embedded in the binary (`rules/core.toml` at build time).
+1. **Built-in core ruleset** - embedded in the binary (`rules/core.toml` at build time), currently 53 policy rules.
 2. **User rules** - `~/.vigil/rules/*.toml`
 3. **Project rules** - `./.vigil/rules/*.toml` (highest precedence for shared, per-project policy)
 4. **Remote feed** - community rules synced on boot and `vigil reload` (disable with `rules.remote_update = false`)
@@ -119,11 +119,57 @@ enabled = false
 
 (Keep the required fields - `scope`, `paths` - to satisfy the schema.)
 
-## Built-in rules at a glance
+## Built-in policy coverage
+
+The built-in ruleset covers credential stores, CI/CD and deployment material,
+package-manager registries, application configuration, containers and cluster
+manifests, password managers, shell history, agent state, destructive system
+commands, privilege escalation, persistence, network configuration, database
+mutations, process and socket discovery, exfiltration channels, and internal
+network access. Repository metadata emits a warning so agent traversal remains
+visible without blocking normal Git workflows.
+
+Representative groups:
+
+| Coverage | Examples |
+| :--- | :--- |
+| Identity and secrets | `.ssh`, `.aws`, `.gnupg`, private keys, password databases, browser stores |
+| Cloud and CI/CD | GitHub workflows, CircleCI, GitLab CI, Vault tokens, Terraform state, Vercel, Firebase |
+| Package and service credentials | Cargo, Docker, Gradle, Composer, NuGet, `.npmrc`, `.netrc`, `.pypirc` |
+| Application and infrastructure | `application*.yml`, `appsettings*.json`, Docker Compose, Kubernetes manifests |
+| Execution attacks | exfiltration, secret hunting, recon, cracking, privilege escalation, persistence, database mutation, privileged containers |
+| Network egress | metadata services, private networks, webhooks, paste and transfer services, plaintext HTTP |
+| Masking entry points | JSON, YAML, TOML, INI, Python, JavaScript and TypeScript source reads |
 
 | Rule id | Covers | Action / severity |
 | :--- | :--- | :--- |
 | `deny-env-files` | `.env`, `.env.*` | deny / high |
+| `deny-ci-cd-deployment-credentials` | workflows, Vault, Terraform, hosting credentials | deny / critical |
+| `deny-package-manager-credentials` | Cargo, Docker, Gradle, Composer, NuGet | deny / critical |
+| `deny-message-queue-and-service-configs` | application YAML, appsettings, Django and WordPress settings | deny / high |
+| `deny-container-and-kubernetes-secrets` | Compose, Kubernetes, Dockerfiles | deny / high |
+| `deny-user-identity-and-shell-config-read` | shell and database command history | deny / high |
+| `deny-password-databases` | 1Password, Bitwarden, KeePass, keychains | deny / critical |
+| `deny-agent-state-and-mcp-config` | Claude, Codex, Cursor, Continue, Aider state | deny / high |
+| `warn-source-control-metadata` | Git, Mercurial and SVN metadata | warn / medium |
+| `deny-exec-remote-file-exfiltration` | uploads and Git/cloud pushes of secret material | deny / critical |
+| `deny-exec-secret-search-and-archive` | recursive secret search and secret archives | deny / critical |
+| `deny-exec-process-and-network-recon` | process, socket, interface and port discovery | deny / high |
+| `deny-exec-password-and-hash-tools` | cracking and hash extraction tools | deny / critical |
+| `deny-exec-privilege-escalation` | sudo shells, user creation, system permission changes | deny / critical |
+| `deny-exec-scheduler-and-service-persistence` | cron, systemd, launchd, Windows scheduled tasks and registry | deny / critical |
+| `deny-exec-network-configuration-and-vpn` | firewall, resolver and tunnel changes | deny / critical |
+| `deny-exec-clipboard-and-screen-capture` | clipboard and screen capture | deny / high |
+| `deny-exec-database-destructive-commands` | destructive SQL and interactive database commands | deny / critical |
+| `deny-exec-container-control-and-mount` | privileged containers, mounts and kernel modules | deny / critical |
+| `deny-exec-source-overwrite-system-shell` | shell startup files and global package installs | deny / critical |
+| `deny-exec-agent-hook-and-config-mutation` | command-line mutation of agent settings and hooks | deny / critical |
+| `warn-exec-package-install` | dependency installation | warn / medium |
+| `deny-net-private-and-loopback-targets` | loopback, RFC1918 and cluster-internal targets | deny / critical |
+| `deny-net-webhook-and-pastebin-exfil` | webhook, paste and transfer endpoints | deny / critical |
+| `warn-net-public-ai-and-package-endpoints` | AI and registry endpoints | warn / low |
+| `warn-net-non-https-url` | plaintext HTTP | warn / medium |
+| `mask-source-config-secrets` | common source and config formats | mask / high |
 | `deny-secrets-dir` | `**/secrets/**` | deny / high |
 | `deny-key-files` | `*.pem`, `*.key`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*` | deny / critical |
 | `deny-ssh-dir` | `.ssh/**` | deny / critical |
@@ -139,4 +185,6 @@ enabled = false
 | `deny-net-metadata-services` | `169.254.169.254`, `metadata.google.internal` | deny / critical |
 | `warn-net-curl-pipe-shell` | `curl … \| sh` | warn / high |
 
-Canonical source: [`rules/core.toml`](../rules/core.toml). Remote feed rules arrive via sync and show up in `vigil rules list`.
+Canonical source: [`rules/core.toml`](../rules/core.toml). Run `vigil rules list`
+for the exact merged policy. Remote feed rules arrive via sync and appear in the
+same list.

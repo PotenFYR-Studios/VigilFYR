@@ -2,15 +2,20 @@ name: Release
 
 on:
   push:
+    branches: [master]
     tags: ["v*"]
   workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
     name: build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -19,29 +24,52 @@ jobs:
             os: ubuntu-latest
             platform: linux
             deb_arch: amd64
+            native_installer: deb
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            platform: linux
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
             platform: linux
             deb_arch: arm64
+            native_installer: deb
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            platform: linux
           - target: armv7-unknown-linux-gnueabihf
             os: ubuntu-latest
             platform: linux
             deb_arch: armhf
+            native_installer: deb
+          - target: armv7-unknown-linux-musleabihf
+            os: ubuntu-latest
+            platform: linux
           - target: riscv64gc-unknown-linux-gnu
             os: ubuntu-latest
             platform: linux
             deb_arch: riscv64
+            native_installer: deb
+          - target: riscv64gc-unknown-linux-musl
+            os: ubuntu-latest
+            platform: linux
           - target: x86_64-apple-darwin
             os: macos-latest
             platform: macos
+            native_installer: pkg
           - target: aarch64-apple-darwin
             os: macos-latest
             platform: macos
+            native_installer: pkg
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             platform: windows
-    env:
-      VER: ""
+            msi_arch: x64
+            native_installer: msi
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            platform: windows
+            msi_arch: arm64
+            native_installer: msi
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -62,21 +90,20 @@ jobs:
             *) VER="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)" ;;
           esac
           echo "VER=$VER" >> "$GITHUB_ENV"
-          echo "version: $VER"
 
-      - name: Package (tarball)
+      - name: Package portable archive
         shell: bash
         run: |
           mkdir -p dist/vigil
           if [ "${{ runner.os }}" = "Windows" ]; then
             cp "target/${{ matrix.target }}/release/vigil.exe" dist/vigil/
           else
-            cp "target/${{ matrix.target }}/release/vigil"* dist/vigil/ || true
+            cp "target/${{ matrix.target }}/release/vigil" dist/vigil/
           fi
           tar -czf "vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz" -C dist vigil
 
-      - name: Build .deb (Linux)
-        if: runner.os == 'Linux'
+      - name: Build .deb installer
+        if: matrix.native_installer == 'deb'
         shell: bash
         run: |
           PKG="pkg/vigil-$VER"
@@ -90,35 +117,31 @@ jobs:
           Architecture: ${{ matrix.deb_arch }}
           Maintainer: PotenFYR Studios <studios@potenfyr.in>
           Description: AI-agent guard CLI
-           Blocks AI coding agents from reading, writing, searching, or
-           executing in sensitive paths, with a live TUI report.
+           Blocks AI coding agents from sensitive paths, with live reporting.
           EOF
-          dpkg-deb --build --root-owner-group "$PKG" "vigil-${{ matrix.platform }}-${VER}-${{ matrix.deb_arch }}.deb"
-        continue-on-error: true
+          dpkg-deb --build --root-owner-group "$PKG" "vigil-linux-$VER-${{ matrix.deb_arch }}.deb"
 
-      - name: Build .pkg (macOS)
-        if: runner.os == 'macOS'
+      - name: Build .pkg installer
+        if: matrix.native_installer == 'pkg'
         shell: bash
         run: |
+          case "${{ matrix.target }}" in
+            x86_64-apple-darwin) PKG_ARCH=x86_64 ;;
+            *) PKG_ARCH=arm64 ;;
+          esac
           mkdir -p pkgroot/usr/local/bin
           cp "target/${{ matrix.target }}/release/vigil" pkgroot/usr/local/bin/vigil
-          pkgbuild \
-            --root pkgroot \
-            --identifier in.potenfyr.vigil \
-            --version "$VER" \
-            --install-location /usr/local/bin \
-            "vigil-${{ matrix.platform }}-${VER}.pkg"
-        continue-on-error: true
+          pkgbuild --root pkgroot --identifier in.potenfyr.vigil --version "$VER" \
+            --install-location /usr/local/bin "vigil-macos-$VER-$PKG_ARCH.pkg"
 
-      - name: Build .msi (Windows)
-        if: runner.os == 'Windows'
+      - name: Build .msi installer
+        if: matrix.native_installer == 'msi'
         shell: bash
         run: |
           dotnet tool install --global wix
-          dotnet_tool_path="$(cd "$HOME/.dotnet/tools" && pwd)"
-          export PATH="$dotnet_tool_path:$PATH"
-          mkdir -p msi/Vigil
-          cp "target/${{ matrix.target }}/release/vigil.exe" msi/Vigil/
+          export PATH="$HOME/.dotnet/tools:$PATH"
+          mkdir -p msi
+          cp "target/${{ matrix.target }}/release/vigil.exe" msi/vigil.exe
           cat > msi/vigil.wxs <<EOF
           <Wix xmlns="http://wixtoolset.org/schemas/v4">
             <Package Name="Vigil" Manufacturer="PotenFYR Studios" Version="$VER"
@@ -135,37 +158,88 @@ jobs:
               </StandardDirectory>
               <ComponentGroup Id="VigilBin">
                 <Component Directory="INSTALLFOLDER">
-                  <File Id="VigilExe" Source="Vigil/vigil.exe" />
+                  <File Id="VigilExe" Source="vigil.exe" />
                   <Environment Id="PATH" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="no" />
                 </Component>
               </ComponentGroup>
             </Package>
           </Wix>
           EOF
-          wix build msi/vigil.wxs -o "vigil-${{ matrix.platform }}-${VER}-x86_64.msi"
-        continue-on-error: true
+          wix build -arch "${{ matrix.msi_arch }}" msi/vigil.wxs "vigil-windows-$VER-${{ matrix.target }}.msi"
 
-      - name: Checksum
+      - name: Checksum artifacts
         shell: bash
         run: |
-          for f in vigil-*.tar.gz vigil-*.deb vigil-*.pkg vigil-*.msi; do
-            [ -e "$f" ] || continue
+          mkdir -p release
+          mv vigil-*.tar.gz vigil-*.deb vigil-*.pkg vigil-*.msi release/ 2>/dev/null || true
+          cd release
+          for file in *; do
+            [ -f "$file" ] || continue
             if command -v sha256sum >/dev/null 2>&1; then
-              sha256sum "$f" > "$f.sha256"
+              sha256sum "$file" > "$file.sha256"
             else
-              shasum -a 256 "$f" > "$f.sha256"
+              shasum -a 256 "$file" > "$file.sha256"
             fi
-            cat "$f.sha256"
           done
 
-      - uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          files: |
-            vigil-*.tar.gz
-            vigil-*.tar.gz.sha256
-            vigil-*.deb
-            vigil-*.deb.sha256
-            vigil-*.pkg
-            vigil-*.pkg.sha256
-            vigil-*.msi
-            vigil-*.msi.sha256
+          name: build-${{ matrix.target }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: publish release
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: mkdir dist
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: build-*
+          merge-multiple: true
+          path: dist
+      - run: cd dist && sha256sum * > SHA256SUMS
+      - name: Resolve release version and tag
+        run: |
+          VERSION="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=v$VERSION" >> "$GITHUB_ENV"
+      - name: Move rolling tag for same-version pushes
+        if: startsWith(github.ref, 'refs/heads/')
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push --force origin "$TAG"
+      - name: Build same-version changelog
+        run: |
+          {
+            echo "## Vigil $VERSION"
+            echo
+            echo "Portable archives and native installers were refreshed for this version."
+            echo
+            echo "### Changes"
+            if git rev-parse -q --verify "$TAG^{}" >/dev/null && [ "$GITHUB_SHA" != "$(git rev-parse "$TAG^{}")" ]; then
+              git log --no-decorate --pretty='- %s (%h)' "$TAG^{}..$GITHUB_SHA"
+            else
+              git log --no-decorate --pretty='- %s (%h)' HEAD~10..HEAD
+            fi
+          } > RELEASE_CHANGELOG.md
+      - name: Create or replace release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "Vigil $TAG" --notes-file RELEASE_CHANGELOG.md --latest
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "Vigil $TAG" \
+              --notes-file RELEASE_CHANGELOG.md --latest
+          fi
+          gh release upload "$TAG" dist/* --clobber

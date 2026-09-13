@@ -18,7 +18,15 @@ Three layers, honest about coverage:
 
 ## What the core ruleset protects
 
-Sensitive areas denied out of the box: `.env` files, secrets directories, SSH/GnuPG/AWS directories, private keys and certificates, credentials files (`.npmrc`, `.netrc`, `.pypirc`), crypto wallet directories, system account files, cloud metadata endpoints, and catastrophic exec patterns (`rm -rf /`, `sudo` system writes, home-directory recursive deletes). See the [Rules reference](rules.md#built-in-rules-at-a-glance) for the exact list and severities.
+Sensitive areas denied out of the box include `.env` files, secrets directories,
+SSH/GnuPG/AWS directories, private keys, credentials files, cloud and CI/CD
+credentials, package-manager credentials, application configuration, containers
+and cluster manifests, password-manager databases, crypto wallets, system account
+files, shell history, agent state, cloud metadata endpoints, private networks,
+and destructive, persistence, escalation, recon, exfiltration, and database
+maintenance commands. Repository metadata is observed with a warning. See the
+[Rules reference](rules.md#built-in-policy-coverage) for the exact list and
+severities.
 
 ## Fail-open, deliberately
 

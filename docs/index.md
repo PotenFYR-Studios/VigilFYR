@@ -22,4 +22,6 @@ curl -fsSL https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/master/in
 vigil setup
 ```
 
-> This content is also served by the [docs site](site/) (Magic UI scaffold in `docs/site/`, deployed via GitHub Pages).
+> This content is also served by the [docs site](web/) built with Vite, React, TypeScript, Bun and Magic UI.
+
+Portable archives cover Linux (GNU/musl on x86_64, ARM64, ARMv7, RISC-V64), macOS (x86_64/ARM64), and Windows (x64/ARM64). Two installers are published on every release: the `curl`/PowerShell one-line installers and native installers (`.deb`, `.pkg`, and `.msi`).

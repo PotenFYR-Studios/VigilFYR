@@ -165,6 +165,15 @@ pub fn doctor() -> Result<()> {
         );
     }
     println!("extensions: {}", extensions.len());
+    let log_path = vigil::agents::home().join(".vigil/events.jsonl");
+    let log = vigil::log::EventLog::new(log_path)
+        .with_retention(Some(cfg.rules.retention_days), Some(cfg.rules.max_events));
+    let records = log.records()?;
+    let counters = vigil::tui::Counters::from_records(&records);
+    println!(
+        "events: {} retained (denied {}, warned {}, masked {})",
+        counters.total, counters.denied, counters.warned, counters.masked
+    );
 
     let mut failures = Vec::new();
     if !cfg.general.enabled {
@@ -172,6 +181,9 @@ pub fn doctor() -> Result<()> {
     }
     if summary.total_rules == 0 {
         failures.push("no rules loaded");
+    }
+    if !cfg.rules.remote_update {
+        failures.push("remote rule updates disabled");
     }
     if extensions
         .iter()

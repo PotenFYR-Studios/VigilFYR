@@ -13,10 +13,12 @@ tray = true             # tray icon; update checks surface here
 
 [masking]
 enabled = false         # opt-in sensitive-data masking
-patterns = ["aws_key", "github_pat", "openai_key", "jwt", "private_key", "env_values"]
+patterns = []           # empty = all 33 built-in provider/token/shape patterns
 
 [rules]
 remote_update = true    # sync remote rules on boot / vigil reload
+retention_days = 30     # delete events older than this (0 disables age retention)
+max_events = 100000     # maximum events kept in the active log (0 disables limit)
 
 [agents]
 claude-code = "enforce" # per-agent: "off" | "audit" | "enforce"
@@ -38,6 +40,8 @@ vigil config get general.mode                  # enforce
 vigil config set general.mode audit            # calibrate without blocking
 vigil config set masking.enabled true
 vigil config set rules.remote_update false
+vigil config set rules.retention_days 90
+vigil config set rules.max_events 250000
 vigil config set agents.codex enforce          # unknown agent ids are created
 ```
 
@@ -52,8 +56,10 @@ Unknown keys error with `unknown config key: <key>`; invalid values error with `
 | `daemon.autostart` | bool | `true` | Daemon starts on login |
 | `daemon.tray` | bool | `true` | Tray icon; `vigil update` availability shows here |
 | `masking.enabled` | bool | `false` | Opt-in; see [Masking](masking.md) |
-| `masking.patterns` | list | all six | Subset to enable fewer families |
+| `masking.patterns` | list | all 33 | Empty list selects every built-in family |
 | `rules.remote_update` | bool | `true` | Remote rule sync on boot and `vigil reload` |
+| `rules.retention_days` | positive integer | `30` | Event age limit; size rotation still applies |
+| `rules.max_events` | non-negative integer | `100000` | Maximum records in the active event log |
 | `agents.<id>` | `off` \| `audit` \| `enforce` | `claude-code = "enforce"` | Per-agent level; any id accepted |
 
 Agent ids match the supported agents: `claude-code`, `codex`, `gemini-cli`, `cursor`, `opencode`, `hermes`.

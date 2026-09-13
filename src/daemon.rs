@@ -25,12 +25,16 @@ pub struct DaemonCore {
 }
 
 impl DaemonCore {
-    pub fn new(log_path: std::path::PathBuf) -> (Self, tokio::sync::mpsc::Sender<IpcRecord>) {
+    pub fn new(
+        log_path: std::path::PathBuf,
+        retention_days: u32,
+        max_events: usize,
+    ) -> (Self, tokio::sync::mpsc::Sender<IpcRecord>) {
         let (tx, rx) = tokio::sync::mpsc::channel::<IpcRecord>(1024);
         let (events, _) = broadcast::channel(1024);
         (
             Self {
-                log: EventLog::new(log_path),
+                log: EventLog::new(log_path).with_retention(Some(retention_days), Some(max_events)),
                 events,
                 inbox: rx,
                 sender: Arc::new(tx.clone()),
@@ -175,7 +179,7 @@ mod tests {
             masked_paths: Vec::new(),
         };
         let path = std::env::temp_dir().join(format!("vigil-daemon-{}.jsonl", std::process::id()));
-        let (core, _tx) = DaemonCore::new(path);
+        let (core, _tx) = DaemonCore::new(path, 30, 100_000);
         let mut rx = core.events.subscribe();
         core.ingest(&event, &verdict).await;
         let record = rx.recv().await.unwrap();

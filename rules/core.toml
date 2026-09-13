@@ -3,6 +3,378 @@
 # Rule order = priority: first matching rule wins, keep most specific first.
 
 [[rule]]
+id = "deny-ci-cd-deployment-credentials"
+description = "Block CI/CD and deployment credential stores"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = [
+  "**/.circleci/**",
+  "**/.github/workflows/**",
+  "**/.gitlab-ci.yml",
+  "**/.drone.yml",
+  "**/.vault-token",
+  "**/.netlify/**",
+  "**/.vercel/**",
+  "**/.firebase/**",
+  "**/serviceAccountKey*.json",
+  "**/*.tfstate",
+  "**/*.tfvars",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-package-manager-credentials"
+description = "Block registry and package-manager credential files"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = [
+  "**/.cargo/credentials.toml",
+  "**/.docker/config.json",
+  "**/.gem/credentials",
+  "**/.gradle/gradle.properties",
+  "**/.composer/auth.json",
+  "**/.nuget/NuGet.Config",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-message-queue-and-service-configs"
+description = "Block broker, cache, and infrastructure configs"
+scope = ["read", "search", "write"]
+paths = [
+  "**/application*.yml",
+  "**/application*.yaml",
+  "**/appsettings*.json",
+  "**/wp-config.php",
+  "**/local_settings.py",
+  "**/settings.py",
+]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-container-and-kubernetes-secrets"
+description = "Block container images, pod specs, and mounted secrets"
+scope = ["read", "search", "write"]
+paths = [
+  "**/docker-compose*.yml",
+  "**/docker-compose*.yaml",
+  "**/k8s/**",
+  "**/kubernetes/**",
+  "**/*.dockerfile",
+  "**/Dockerfile*",
+]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-user-identity-and-shell-config-read"
+description = "Block reads of shell history and account metadata"
+scope = ["read", "search"]
+paths = [
+  "**/.bash_history",
+  "**/.zsh_history",
+  "**/.fish_history",
+  "**/.psql_history",
+  "**/.mysql_history",
+  "**/.wget-hsts",
+]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-password-databases"
+description = "Block password-manager databases and exports"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = [
+  "**/*.kdbx",
+  "**/*.keychain*",
+  "**/1Password/**",
+  "**/Bitwarden/**",
+  "**/KeePass/**",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-agent-state-and-mcp-config"
+description = "Block agent session state and tool configuration"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = [
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.continue/**",
+  "**/.aider*",
+]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "warn-source-control-metadata"
+description = "Warn when agents traverse repository metadata"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = ["**/.git/**", "**/.hg/**", "**/.svn/**"]
+action = "warn"
+severity = "medium"
+enabled = true
+
+[[rule]]
+id = "deny-exec-remote-file-exfiltration"
+description = "Block local files being uploaded through transfer clients"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(scp|rsync|sftp|ftp|curl|wget|gh|git|aws|gcloud|az|oci)\\b[^;|&]*(\\s-[a-zA-Z-]*[frTa-zA-Z-]*\\s+|\\s)+(~|\\$HOME|/home/|/Users/|C:\\\\Users\\\\)[^\\s]*(\\.env|id_rsa|id_ed25519|\\.pem|\\.key|credentials|password)",
+  "(?i)\\b(git\\s+push|gh\\s+(repo|secret)|aws\\s+s3\\s+(cp|sync|mv)|gcloud\\s+(storage|compute\\s+scp)|az\\s+storage)\\b",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-secret-search-and-archive"
+description = "Block recursive secret hunting and staged archives"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(grep|rg|findstr)\\b.*(-r|--recursive|/s)[^;|&]*(password|secret|token|api[_-]?key|private[_-]?key|\\.env)",
+  "(?i)\\b(tar|zip|7z|rar)\\b[^;|&]*(\\.env|id_rsa|id_ed25519|\\.pem|\\.key|credentials|\\.ssh|\\.aws)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-process-and-network-recon"
+description = "Block process, socket, ARP, and wireless discovery"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(ps|ps aux|top|tasklist|netstat|ss|lsof|arp|ifconfig|ipconfig|iwconfig|route)\\b",
+  "(?i)\\b(nmap|masscan|zenmap|hping3?|nc|ncat|socat)\\b",
+]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-exec-password-and-hash-tools"
+description = "Block password cracking and hash extraction"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(john|hashcat|hydra|medusa|cewl|crunch|ophcrack|mimikatz|secretsdump)\\b",
+  "(?i)\\b(cat|type)\\b.*/etc/(shadow|sudoers)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-privilege-escalation"
+description = "Block sudo shell launch, user creation, and permission escalation"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(^|\\s)sudo\\s+(-i\\b|-s\\b|/bin/(ba|z)?sh\\b|bash\\b|sh\\b|zsh\\b)",
+  "(?i)(useradd|adduser|net\\s+user)\\b",
+  "(?i)chmod\\s+([0-7]{3,4}|[ugoa]*\\+[wxs])\\s+/(etc|usr|bin|sbin|boot)/",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-scheduler-and-service-persistence"
+description = "Block cron, systemd, launchd, and registry persistence"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(crontab|systemctl\\s+(enable|start|restart)|launchctl\\s+(load|submit))\\b",
+  "(?i)\\b(schtasks|reg\\s+(add|delete)|sc\\s+(create|config|start))\\b",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-network-configuration-and-vpn"
+description = "Block host firewall, resolver, and tunnel changes"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(iptables|ip6tables|nft|ufw|firewall-cmd)\\b",
+  "(?i)(openvpn|wireguard|wg-quick|ssh\\s+-[DLR]|tunctl)\\b",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-clipboard-and-screen-capture"
+description = "Block clipboard, screen, and input capture"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(pbcopy|pbpaste|xclip|xsel|wl-copy|wl-paste|termux-clipboard)\\b",
+  "(?i)(screencapture|import\\s+-window|gnome-screenshot|scrot|ffmpeg.*x11grab|ffmpeg.*gdigrab)\\b",
+]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-exec-database-destructive-commands"
+description = "Block SQL drop, truncate, user, and copy operations"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(drop\\s+(database|schema|table)|truncate\\s+table|alter\\s+user|create\\s+user|grant\\s+all)\\b",
+  "(?i)\\b(psql|mysql|sqlite3|mongosh|sqlcmd)\\b.*(-c|--eval|-e)\\b",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-container-control-and-mount"
+description = "Block privileged containers, mounts, and kernel modules"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(docker|podman|nerdctl)\\b.*(--privileged|\\s+exec\\b|\\s+cp\\b|/var/run/docker.sock)",
+  "(?i)\\b(mount|umount|insmod|modprobe|rmmod|kexec)\\b",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-compiler-artifact-execution"
+description = "Block build outputs and shell archives from running directly"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(^|\\s|/)(target/(debug|release)/|dist/|build/)[^\\s]*",
+  "(?i)\\b(sh|bash|zsh)\\b.*\\.(sh|bash|zsh)\\b",
+]
+action = "warn"
+severity = "medium"
+enabled = true
+
+[[rule]]
+id = "deny-exec-source-overwrite-system-shell"
+description = "Block shell startup file and profile changes"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(cp|mv|tee|cat|echo|sed|perl|ruby)\\b[^;|&]*(\\.(bash|zsh|fish)rc|\\.profile|bash_profile|zprofile|/etc/profile)",
+  "(?i)(npm|pnpm|yarn|bun|pip|gem|cargo)\\s+(install|add|i)\\b.*(-g|--global)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-agent-hook-and-config-mutation"
+description = "Block edits to agent hooks and settings through commands"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(cp|mv|rm|tee|cat|echo|chmod|chown|sed|jq)\\b[^;|&]*(\\.claude|\\.codex|\\.cursor|\\.gemini|settings\\.json|hooks\\.json)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "warn-exec-package-install"
+description = "Warn on dependency installation before remote sync"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(npm|pnpm|yarn|bun|pip|pip3|uv|poetry|gem|cargo|brew|apt|apt-get|dnf|pacman|choco|winget)\\s+(install|add|i|sync)\\b",
+]
+action = "warn"
+severity = "medium"
+enabled = true
+
+[[rule]]
+id = "deny-net-private-and-loopback-targets"
+description = "Block requests to internal and loopback networks"
+scope = ["net"]
+paths = []
+commands = [
+  "(^|\\s)(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)",
+  "(?i)(\\.internal|\\.local|svc\\.cluster\\.local)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-net-webhook-and-pastebin-exfil"
+description = "Block common webhook, paste, and transfer endpoints"
+scope = ["net"]
+paths = []
+commands = [
+  "(?i)(discord(apps)?\\.com/api/webhooks|slack\\.com/services|webhook\\.site|requestbin|paste\\.rs|termbin\\.com|transfer\\.sh|file\\.io|0x0\\.st)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "warn-net-public-ai-and-package-endpoints"
+description = "Notice AI and package registry traffic for review"
+scope = ["net"]
+paths = []
+commands = [
+  "(?i)(api\\.(openai|anthropic|google|github)\\.com|registry\\.(npmjs|pypi|rubygems)\\.org|crates\\.io|raw\\.githubusercontent\\.com)",
+]
+action = "warn"
+severity = "low"
+enabled = true
+
+[[rule]]
+id = "warn-net-non-https-url"
+description = "Notice plaintext HTTP transfers"
+scope = ["net", "exec"]
+paths = []
+commands = ["http://(?!localhost|127\\.0\\.0\\.1)"]
+action = "warn"
+severity = "medium"
+enabled = true
+
+[[rule]]
+id = "mask-source-config-secrets"
+description = "Mask provider keys found in common source/config reads"
+scope = ["read", "search"]
+paths = [
+  "**/*.json",
+  "**/*.yml",
+  "**/*.yaml",
+  "**/*.toml",
+  "**/*.ini",
+  "**/*.conf",
+  "**/*.properties",
+  "**/*.py",
+  "**/*.js",
+  "**/*.ts",
+]
+action = "mask"
+severity = "high"
+enabled = true
+
+[[rule]]
 id = "deny-cloud-credentials"
 description = "Block cloud and CI credential files"
 scope = ["read", "search", "write", "delete", "rename"]

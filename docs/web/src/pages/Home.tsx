@@ -39,8 +39,8 @@ export function Home() {
           </MagicCard>
           <MagicCard className="p-5">
             <Zap className="h-5 w-5 text-brand-pink" />
-            <NumberTicker value={26} className="mt-3 block text-3xl font-bold text-brand-pink" />
-            <p className="mt-1 text-xs text-faint">built-in rules</p>
+            <NumberTicker value={53} className="mt-3 block text-3xl font-bold text-brand-pink" />
+            <p className="mt-1 text-xs text-faint">built-in policies</p>
           </MagicCard>
         </div>
         <div className="mt-12 grid gap-[14px] sm:grid-cols-2 lg:grid-cols-3">

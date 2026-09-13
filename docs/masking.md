@@ -15,16 +15,17 @@ Or accept it in `vigil setup` (masking step of the wizard).
 
 ## What gets masked
 
-Six pattern families ship enabled by default:
+Thirty-three pattern families ship enabled by default, grouped by provider,
+token, URI, assignment, and entropy shape:
 
-| Pattern | Matches |
+| Group | Patterns |
 | :--- | :--- |
-| `aws_key` | AWS access key IDs and secret keys (`AKIA…`) |
-| `github_pat` | GitHub personal access tokens (`ghp_`, `github_pat_`, …) |
-| `openai_key` | OpenAI API keys (`sk-…`) |
-| `jwt` | JSON Web Tokens (three base64url segments) |
-| `private_key` | PEM private key blocks (`-----BEGIN … PRIVATE KEY-----`) |
-| `env_values` | Values assigned in env-style files (`SECRET=…`) |
+| Cloud providers | `aws_key`, `aws_session_token`, `azure_storage_key`, `azure_client_secret`, `google_api_key`, `digitalocean_token`, `cloudflare_api_token`, `heroku_api_key` |
+| AI services | `openai_key`, `anthropic_key`, `huggingface_token` |
+| Developer platforms | `github_pat`, `gitlab_pat`, `private_token`, `npm_token`, `pypi_token`, `rubygems_key` |
+| Messaging and billing | `slack_token`, `telegram_bot_token`, `stripe_key`, `sendgrid_key`, `mailgun_key`, `twilio_key`, `line_token`, `plaid_secret` |
+| Identity and transport | `jwt`, `private_key`, `connection_uri`, `sensitive_uri`, `sensitive_assignment` |
+| Generic secret shapes | `hex_secret`, `base64_secret`, `env_values` |
 
 Example - `AKIAIOSFODNN7EXAMPLE` becomes `AKIA••••••••••••••••` (4-char prefix preserved); the exact replacement form is applied at the content layer before the agent's tool result is returned.
 
@@ -44,7 +45,9 @@ action = "mask"
 severity = "high"
 ```
 
-Custom pattern families are added via [Extensions](extensions.md) (`patterns/*.toml` next to your `manifest.toml`).
+Canonical pattern source: [`rules/patterns.toml`](../rules/patterns.toml).
+Custom pattern families are added via [Extensions](extensions.md)
+(`patterns/*.toml` next to your `manifest.toml`).
 
 ## Interplay with other rules
 

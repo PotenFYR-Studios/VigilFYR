@@ -6,12 +6,12 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/PotenFYR-Studios/VigilFYR/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=CI&labelColor=1c1e26&color=2ea043)](https://github.com/PotenFYR-Studios/VigilFYR/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/PotenFYR-Studios/VigilFYR?style=for-the-badge&logo=github&logoColor=white&label=Release&labelColor=1c1e26&color=eac54f)](https://github.com/PotenFYR-Studios/VigilFYR/releases)
-[![Docs](https://img.shields.io/badge/Docs-VigilFYR%20docs-8b5cf6?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://potenfyr-studios.github.io/VigilFYR/)
+[![Docs](https://img.shields.io/badge/Docs-vigilfyr.docs.potenfyr.in-8b5cf6?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://vigilfyr.docs.potenfyr.in)
 [![License](https://img.shields.io/badge/License-Apache--2.0%20%2B%20Commons%20Clause-2ea043?style=for-the-badge&logo=apache&logoColor=white&labelColor=1c1e26)](https://github.com/PotenFYR-Studios/VigilFYR/blob/master/LICENSE)
-[![Platforms](https://img.shields.io/badge/Platforms-linux%20%7C%20macOS%20%7C%20Windows-0ea5e9?style=for-the-badge&logo=linux&logoColor=white&labelColor=1c1e26)](#platform-support)
+[![Platforms](https://img.shields.io/badge/Platforms-linux%20%7C%20macOS%20%7C%20Windows-0ea5e9?style=for-the-badge&logo=linux&logoColor=white&labelColor=1c1e26)](#-platform-support)
 [![View](https://komarev.com/ghpvc/?username=PotenFYR-Studios-VigilFYR&color=ec4899&style=for-the-badge&label=VIEW&labelColor=1c1e26)](https://github.com/PotenFYR-Studios/VigilFYR)
 
-[Overview](#overview) · [Install](#install) · [Quick Start](#quick-start) · [Docs](https://potenfyr-studios.github.io/VigilFYR/) · [Rules](#rules) · [Extensions](#extensions) · [Releases](https://github.com/PotenFYR-Studios/VigilFYR/releases)
+[Overview](#overview) · [Install](#install) · [Quick Start](#quick-start) · [Configuration](#configuration) · [Security](#security-model) · [Contributing](#contributing) · [Releases](https://github.com/PotenFYR-Studios/VigilFYR/releases)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/master/install.sh | sh
@@ -21,13 +21,33 @@ curl -fsSL https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/master/in
 
 ---
 
-## Overview
+## 🔎 Overview
 
 Vigil is a local guard for AI coding agents: it sits between your agent and your filesystem and blocks reads, writes, searches, and commands that touch sensitive areas - `.env` files, secrets directories, SSH and AWS credentials, private keys, crypto wallets, system paths. Hooks are auto-installed for agents that support them; a filesystem-watch audit mode and the `vigil shim` wrapper cover everything else.
 
 Because it guards the tool actions on your machine, it is **proxy-proof**: it works identically behind any LLM API proxy or router (9router, LiteLLM, corporate gateways) - the model never sees what the tool never touched.
 
 Built by **PotenFYR Studios**.
+
+---
+
+## 🧭 Contents
+
+- [Core Guarantees](#core-guarantees)
+- [Features](#features)
+- [Security Model](#security-model)
+- [Repository Layout](#repository-layout)
+- [Install](#install)
+- [Configuration](#configuration)
+- [Supported Agents](#supported-agents)
+- [CLI Reference](#cli-reference)
+- [Releases](#releases)
+- [Architecture](#architecture)
+- [Extensions](#extensions)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
 
 ---
 
@@ -42,7 +62,7 @@ Built by **PotenFYR Studios**.
 
 ---
 
-## Features
+## ✨ Features
 
 ### Enforcement, three layers deep
 - **Hooks (block before it runs)** - `vigil setup` detects installed agents and wires their native hook systems automatically. Every read, write, search, exec, and net action is checked first.
@@ -51,7 +71,7 @@ Built by **PotenFYR Studios**.
 - Enforcement where possible, visibility everywhere - no agent gets a free pass; only enforcement depth differs.
 
 ### Rules
-- Built-in core ruleset: `.env` files, secrets dirs, `.ssh/`, `.aws/`, `.gnupg/`, key and credentials files, wallet directories, system paths - plus exec guards for `rm -rf /`, `sudo` system writes, and cloud metadata endpoints.
+- Built-in core ruleset: identity and cloud credentials, CI/CD material, package registries, application configuration, containers, password managers, wallets, shell history, agent state, system paths - plus destructive, escalation, persistence, recon, exfiltration, database mutation, and private-network guards.
 - Rule schema with severities and priorities; first match wins, most specific first.
 - Built-in coverage now includes cloud/CI credentials, database configs and dumps, browser credential stores, system identity writes, agent config tampering, reverse shells, base64 shell pipelines, package-script exfiltration, and history/wipe attempts.
 - Remote rule sync from the community feed on boot and `vigil reload`; `vigil rules update` refreshes on demand.
@@ -62,18 +82,18 @@ Built by **PotenFYR Studios**.
 - Reusable custom patterns via `rules/patterns.toml` and extensions.
 
 ### Daemon, tray and updates
-- `vigil daemon` owns event persistence, a local Unix-socket bus, tray integration, and update checks. Autostart and tray are opt-out config keys.
+- `vigil daemon` owns event persistence, configurable age/count retention, a local IPC bus, tray integration, and update checks. Autostart and tray are opt-out config keys.
 - `vigil update` self-updates the binary (semver check plus commits-behind, surfaced in the tray and TUI).
 
 ### Live report
-- `vigil tui` is the default command: every verdict, who triggered it, which agent, and why - rule id and severity included - with a scrollable event log and export.
+- `vigil tui` is the default command: every verdict, who triggered it, which agent, and why - rule id and severity included - with a scrollable event log, export, and `--report` for SIEM-style handoff.
 
 ### Extensions
 - Drop a `manifest.toml` into `~/.vigil/extensions/<name>/` to add your own rules, masking patterns, and event hooks. No fork required.
 
 ---
 
-## Security Model
+## 🛡️ Security Model
 
 | Layer | Control |
 |---|---|
@@ -88,7 +108,7 @@ Full threat model and honest limits: [docs/security-model.md](docs/security-mode
 
 ---
 
-## Repository Layout
+## 🧱 Repository Layout
 
 ```
 src/
@@ -115,7 +135,7 @@ rules/
   patterns.toml         reusable masking patterns
 tests/                  agents, intercept, masking pipeline, rules, shim, e2e
 docs/                   markdown docs (imported by the docs site)
-docs/site/              Next.js docs site, exported for GitHub Pages
+docs/web/               Vite, React, TypeScript and Magic UI docs site
 .github/workflows/      ci, release, docs-pages, snake
 install.sh              POSIX installer (checksum-verified)
 install.ps1             PowerShell installer
@@ -123,7 +143,7 @@ install.ps1             PowerShell installer
 
 ---
 
-## Install
+## 🚀 Install
 
 OS and arch are detected and the download is checksum-verified:
 
@@ -137,9 +157,9 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/master/install.ps1 | iex
 ```
 
-The binary lands in `~/.local/bin` (add it to `PATH` if the installer says so). Release tarballs cover **Linux, macOS and Windows** on **x86_64 and arm64**, each with a `.sha256` sidecar.
+The binary lands in `~/.local/bin` (add it to `PATH` if the installer says so). Release archives cover **Linux** (GNU and musl; x86_64, ARM64, ARMv7, RISC-V64), **macOS** (x86_64 and ARM64), and **Windows** (x64 and ARM64), each with a `.sha256` sidecar.
 
-## Quick Start
+### Quick Start
 
 ```sh
 # Interactive wizard: OS check, agent auto-detect, per-agent mode,
@@ -161,7 +181,7 @@ That's it. Agents you had installed are now guarded; `vigil tui` shows the live 
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 Config lives at `~/.vigil/config.toml`. A missing file means defaults. Read and write keys without editing the file:
 
@@ -179,7 +199,7 @@ vigil config set masking.enabled true
 | `daemon.autostart` | `true` | Start the daemon on login |
 | `daemon.tray` | `true` | Show the tray icon (update checks live here too) |
 | `masking.enabled` | `false` | Opt-in sensitive-data masking |
-| `masking.patterns` | all built-in | fourteen provider/token/URI patterns plus JWT, private keys, and env values |
+| `masking.patterns` | all built-in | Empty list selects all 33 provider, token, URI, assignment, and entropy patterns |
 | `rules.remote_update` | `true` | Sync community rules on boot / `vigil reload` |
 | `agents.<id>` | `claude-code=enforce` | Per-agent mode: `off`, `audit`, `enforce` |
 
@@ -189,7 +209,7 @@ Full schema and cookbook: [Rules Reference](docs/rules.md) · [Configuration Ref
 
 ---
 
-## Supported Agents
+## 🤖 Supported Agents
 
 | Agent | Enforcement | Audit | Shim |
 | :--- | :---: | :---: | :---: |
@@ -205,17 +225,19 @@ Full schema and cookbook: [Rules Reference](docs/rules.md) · [Configuration Ref
 
 ---
 
-## CLI Reference
+## 🧰 CLI Reference
 
 ```
 vigil                       launch the TUI (default command)
-vigil tui [--once]          live report; --once prints one snapshot
+vigil tui [--once] [--report]
+                            live report; --once prints one snapshot, --report
+                            prints counters and retained events for SIEM
 vigil setup [--defaults]    interactive (or promptless) setup wizard
 vigil daemon [--no-tray]    run the background daemon
 vigil rules list|path       inspect the active ruleset
 vigil rules test <action> [path] [--command <cmd>] [--agent <id>]
                             dry-run the effective policy without logging an event
-vigil doctor                read-only setup, agent, rule and masking health check
+vigil doctor                read-only setup, policy, retention and event health check
 vigil rules update          refresh the remote community feed
 vigil reload                reload rules + config without restart
 vigil config get|set        read/write config keys
@@ -229,7 +251,7 @@ vigil update [--check]      self-update the binary
 
 ---
 
-## Updating
+### Updating
 
 Vigil tells you when a new release ships (update checks ride along with the tray; opt out with `daemon.tray = false` / `vigil daemon --no-tray`):
 
@@ -242,19 +264,20 @@ Re-running the curl one-liner is always a safe in-place upgrade; your `~/.vigil`
 
 ---
 
-## Auto build and releases
+## 📦 Releases
 
 | Event | What happens |
 |---|---|
 | push to `master` / `feat/**` | CI: fmt + clippy + tests on Linux, macOS, Windows |
 | push to `master` | Docs site auto-deploys to GitHub Pages; snake animation refreshes |
-| version tag `vX.Y.Z` | Full release: cross-compiled tarballs (5 targets) + SHA256SUMS |
+| push to `master` with the same version | portable archives and native installers are rebuilt, release notes refresh, and old release assets are replaced |
+| version tag `vX.Y.Z` | Full release: portable archives for Linux (GNU + musl), macOS, and Windows (x64 + ARM64), plus `.deb`, `.pkg`, and `.msi` installers and SHA256SUMS |
 
-Same version, new commits = CI green, nothing published. Bumped version = new tag, new release, new artifacts. Fully automatic.
+Same version, new commits: the rolling tag and release assets are refreshed automatically. Bumped version: the same pipeline publishes the next tagged release.
 
 ---
 
-## Architecture
+## 🧠 Architecture
 
 ```text
                 ┌──────────────────────────────────────────┐
@@ -276,7 +299,7 @@ Hook verdicts are computed locally and synchronously - the daemon is a reporter,
 
 ---
 
-## Extensions
+## 🧩 Extensions
 
 Ship your own rules, patterns, and event hooks as a drop-in folder:
 
@@ -297,10 +320,10 @@ Authoring guide: [Extensions](docs/extensions.md).
 
 ---
 
-## Docs site
+## 📚 Documentation
 
 Full documentation lives in [docs/](docs/) and is published to the
-[VigilFYR docs site](https://potenfyr-studios.github.io/VigilFYR/) with
+[vigilfyr.docs.potenfyr.in](https://vigilfyr.docs.potenfyr.in) with
 installation, rules, masking, agents matrix, daemon, extensions and
 security-model guides. Built with Vite, React, TypeScript, Bun and Magic UI
 components (`docs/web/`), statically generated and auto-deployed on every
@@ -320,7 +343,7 @@ Live VigilFYR star chart, served by [star-history.com](https://star-history.com)
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 Contributions make the open-source community such an amazing place to learn, inspire and create. Any contributions you make are **greatly appreciated** - see [CONTRIBUTING.md](CONTRIBUTING.md) and the [good first issues](https://github.com/PotenFYR-Studios/VigilFYR/labels/good%20first%20issue). Security concerns: please use [SECURITY.md](SECURITY.md) (private vulnerability reporting), not public issues.
 
@@ -344,15 +367,15 @@ Contributions make the open-source community such an amazing place to learn, ins
 
 ---
 
-## Platform Support
+## 🌍 Platform Support
 
-Capability-based detection rather than distro assumptions. Works wherever Rust stable builds and the agent exists: Linux (systemd user units for autostart), macOS (launchd), Windows (autostart + tray). Release targets: x86_64 and arm64 across all three OSes.
+Capability-based detection rather than distro assumptions. Works wherever Rust stable builds and the agent exists: Linux (systemd user units for autostart), macOS (launchd), Windows (autostart + tray). Portable targets: Linux GNU and musl on x86_64, ARM64, ARMv7, and RISC-V64; macOS and Windows on x86_64/ARM64 and x64/ARM64.
 
 Vigil is fully local: no telemetry, no cloud calls - the only outbound requests are the rule feed and update checks, both configurable off.
 
 ---
 
-## License
+## 📜 License
 
 Vigil is licensed under **Apache-2.0 with Commons Clause**.
 
@@ -398,7 +421,7 @@ are fine. Questions or a commercial exception: [contact the org](https://potenfy
 [![GitHub](https://img.shields.io/badge/GitHub-PotenFYR--Studios-181717?style=for-the-badge&logo=github&logoColor=white&labelColor=1c1e26)](https://github.com/PotenFYR-Studios)
 [![Website](https://img.shields.io/badge/Website-potenfyr.in-8b5cf6?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=1c1e26)](https://potenfyr.in/)
 [![Community](https://img.shields.io/badge/Community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=1c1e26)](https://discord.com/invite/zUaN2FPBec)
-[![Docs](https://img.shields.io/badge/Docs-VigilFYR%20docs-0ea5e9?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://potenfyr-studios.github.io/VigilFYR/)
+[![Docs](https://img.shields.io/badge/Docs-vigilfyr.docs.potenfyr.in-0ea5e9?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://vigilfyr.docs.potenfyr.in)
 
 <!-- markdownlint-disable -->
 <div align="center">

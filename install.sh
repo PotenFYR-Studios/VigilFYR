@@ -4,6 +4,7 @@ set -eu
 REPO="PotenFYR-Studios/VigilFYR"
 INSTALL_DIR="${VIGIL_INSTALL_DIR:-$HOME/.local/bin}"
 DRY_RUN=0
+ASSET_BASE="${VIGIL_RELEASE_URL:-https://github.com/$REPO/releases/latest/download}"
 
 case "${1:-}" in
   --dry-run) DRY_RUN=1 ;;
@@ -20,31 +21,37 @@ esac
 case "$(uname -m)" in
   x86_64|amd64) ARCH=x86_64 ;;
   aarch64|arm64) ARCH=arm64 ;;
-  armv7l) ARCH=armv7 ;;
+  armv6l|armv7l|armv8l) ARCH=armv7 ;;
   riscv64) ARCH=riscv64 ;;
   *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
 esac
 
-echo "install plan: vigil-$OS-$ARCH.tar.gz -> $INSTALL_DIR"
+LIBC=gnu
+if [ "$(uname)" = "Linux" ]; then
+  if ldd --version 2>/dev/null | grep -qi musl; then
+    LIBC=musl
+  elif [ -e "/lib/ld-musl-$ARCH.so.1" ]; then
+    LIBC=musl
+  fi
+fi
+echo "install plan: vigil-$OS-$ARCH ($LIBC).tar.gz -> $INSTALL_DIR"
 if [ "$DRY_RUN" -eq 1 ]; then exit 0; fi
 
-API="https://api.github.com/repos/$REPO/releases/latest"
 # Artifact names come from release.yml: vigil-<platform>-<rust-target>.tar.gz
 case "$OS-$ARCH" in
-  linux-x86_64)  TGT="x86_64-unknown-linux-gnu" ;;
-  linux-arm64)   TGT="aarch64-unknown-linux-gnu" ;;
-  linux-armv7)   TGT="armv7-unknown-linux-gnueabihf" ;;
-  linux-riscv64) TGT="riscv64gc-unknown-linux-gnu" ;;
+  linux-x86_64)  TGT="x86_64-unknown-linux-$LIBC" ;;
+  linux-arm64)   TGT="aarch64-unknown-linux-$LIBC" ;;
+  linux-armv7)   if [ "$LIBC" = musl ]; then TGT=armv7-unknown-linux-musleabihf; else TGT=armv7-unknown-linux-gnueabihf; fi ;;
+  linux-riscv64) TGT="riscv64gc-unknown-linux-$LIBC" ;;
   macos-x86_64)  TGT="x86_64-apple-darwin" ;;
   macos-arm64)   TGT="aarch64-apple-darwin" ;;
   *) echo "unsupported platform: $OS-$ARCH (no release artifact)" >&2; exit 1 ;;
 esac
-ASSET="https://github.com/$REPO/releases/latest/download/vigil-$OS-$TGT.tar.gz"
+ASSET="$ASSET_BASE/vigil-$OS-$TGT.tar.gz"
 CHECKSUM="$ASSET.sha256"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-curl -fsSL "$API" > "$TMP/release.json"
 curl -fL "$ASSET" -o "$TMP/vigil.tar.gz"
 curl -fL "$CHECKSUM" -o "$TMP/vigil.tar.gz.sha256"
 

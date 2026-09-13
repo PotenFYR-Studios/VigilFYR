@@ -174,7 +174,9 @@ pub async fn run(args: InterceptArgs, mut stdin: impl Unpin + tokio::io::AsyncRe
     eprintln!("vigil: {} ({})", verdict.action, verdict.reason);
     if let Ok(event) = serde_json::from_slice::<Event>(&event_json) {
         let record = IpcRecord::from_verdict(&event, &verdict);
-        let log = EventLog::new(vigil::agents::home().join(".vigil/events.jsonl"));
+        let cfg = Config::load();
+        let log = EventLog::new(vigil::agents::home().join(".vigil/events.jsonl"))
+            .with_retention(Some(cfg.rules.retention_days), Some(cfg.rules.max_events));
         let _ = log.append(&record);
         publish(&record).await;
     }

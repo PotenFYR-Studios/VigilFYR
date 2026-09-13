@@ -4,6 +4,82 @@
 # and appends "(masked)".
 
 [[pattern]]
+name = "azure_storage_key"
+regex = 'AccountKey=[A-Za-z0-9+/=]{88}'
+
+[[pattern]]
+name = "azure_client_secret"
+regex = '(?i)(client[_-]?secret|client_secret)[^A-Za-z0-9]*[A-Za-z0-9._~-]{20,}'
+
+[[pattern]]
+name = "gitlab_pat"
+regex = 'glpat-[A-Za-z0-9_-]{20,}'
+
+[[pattern]]
+name = "heroku_api_key"
+regex = '(?i)heroku.{0,20}[0-9a-f]{32}'
+
+[[pattern]]
+name = "digitalocean_token"
+regex = '(?i)(dop_v1_|digitalocean.{0,20})[a-f0-9]{64}'
+
+[[pattern]]
+name = "cloudflare_api_token"
+regex = '(?i)cloudflare.{0,20}[A-Za-z0-9_-]{40}'
+
+[[pattern]]
+name = "npm_token"
+regex = 'npm_[A-Za-z0-9]{36}'
+
+[[pattern]]
+name = "pypi_token"
+regex = 'pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]+'
+
+[[pattern]]
+name = "rubygems_key"
+regex = '(?i)(rubygems|rubygems_api_key).{0,20}[a-f0-9]{32}'
+
+[[pattern]]
+name = "huggingface_token"
+regex = 'hf_[A-Za-z0-9]{34,}'
+
+[[pattern]]
+name = "line_token"
+regex = '(?i)line.{0,20}[a-f0-9]{32}'
+
+[[pattern]]
+name = "mailgun_key"
+regex = 'key-[0-9a-zA-Z]{32}'
+
+[[pattern]]
+name = "plaid_secret"
+regex = '(?i)plaid.{0,20}[a-f0-9]{30,}'
+
+[[pattern]]
+name = "telegram_bot_token"
+regex = '\b[0-9]{8,10}:[A-Za-z0-9_-]{35}\b'
+
+[[pattern]]
+name = "aws_session_token"
+regex = '(?i)(aws_session_token|AWSCURRENT)[^A-Za-z0-9]*[A-Za-z0-9/+=]{100,}'
+
+[[pattern]]
+name = "sensitive_uri"
+regex = '(?i)\b(https?|ftp|sftp|ssh)://[^\s/:@]+:[^\s/@]+@[^\s]+'
+
+[[pattern]]
+name = "sensitive_assignment"
+regex = '(?im)^[A-Z_0-9]*(?i:passwd|pwd|credential|cert|license|auth|bearer|cookie|session)[A-Z_0-9]*\s*=\s*[^\s]{8,}$'
+
+[[pattern]]
+name = "hex_secret"
+regex = '\b[a-f0-9]{64}\b'
+
+[[pattern]]
+name = "base64_secret"
+regex = '\b[A-Za-z0-9+/]{40,}={0,2}\b'
+
+[[pattern]]
 name = "aws_key"
 regex = 'AKIA[0-9A-Z]{16}'
 

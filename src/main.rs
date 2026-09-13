@@ -80,6 +80,9 @@ enum Commands {
         /// Print one snapshot and exit
         #[arg(long)]
         once: bool,
+        /// Print a full report with counters and all retained events
+        #[arg(long)]
+        report: bool,
     },
     /// Run read-only setup and policy health checks
     Doctor,
@@ -146,7 +149,10 @@ enum ConfigCommands {
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    match cli.command.unwrap_or(Commands::Tui { once: false }) {
+    match cli.command.unwrap_or(Commands::Tui {
+        once: false,
+        report: false,
+    }) {
         Commands::Daemon { no_tray } => {
             let runtime = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
@@ -219,7 +225,7 @@ fn main() -> anyhow::Result<()> {
             };
             uninstall::run(keep, dry_run, yes)
         }
-        Commands::Tui { once } => vigil::tui::run_once(once),
+        Commands::Tui { once, report } => vigil::tui::run_once(once, report),
         Commands::Doctor => rules::doctor(),
     }
 }

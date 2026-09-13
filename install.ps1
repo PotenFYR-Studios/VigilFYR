@@ -5,10 +5,16 @@ param(
 $ErrorActionPreference = "Stop"
 $Repo = "PotenFYR-Studios/VigilFYR"
 $InstallDir = if ($env:VIGIL_INSTALL_DIR) { $env:VIGIL_INSTALL_DIR } else { Join-Path $env:LOCALAPPDATA "Programs/Vigil" }
-$Architecture = if ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { throw "unsupported architecture" }
-$Asset = "https://github.com/$Repo/releases/latest/download/vigil-windows-x86_64-pc-windows-msvc.tar.gz"
+$Architecture = switch ([Runtime.InteropServices.RuntimeInformation].GetProperty("OSArchitecture").GetValue($null).ToString()) {
+  "X64" { "x86_64" }
+  "Arm64" { "arm64" }
+  default { throw "unsupported architecture" }
+}
+$Target = if ($Architecture -eq "arm64") { "aarch64-pc-windows-msvc" } else { "x86_64-pc-windows-msvc" }
+$Asset = if ($env:VIGIL_RELEASE_URL) { $env:VIGIL_RELEASE_URL } else { "https://github.com/$Repo/releases/latest/download" }
+$Asset = "$Asset/vigil-windows-$Target.tar.gz"
 
-Write-Host "install plan: vigil-windows-$Architecture.tar.gz -> $InstallDir"
+Write-Host "install plan: vigil-windows-$Architecture ($Target).tar.gz -> $InstallDir"
 if ($DryRun) { exit 0 }
 
 $Temp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ([Guid]::NewGuid().ToString()))

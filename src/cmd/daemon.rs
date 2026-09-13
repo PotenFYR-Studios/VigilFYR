@@ -19,7 +19,11 @@ pub async fn daemon(no_tray: bool) -> Result<()> {
         "vigil daemon: detected {} agents",
         vigil::agents::detect_agents().len()
     );
-    let (core, _sender) = vigil::daemon::DaemonCore::new(home.join(".vigil/events.jsonl"));
+    let (core, _sender) = vigil::daemon::DaemonCore::new(
+        home.join(".vigil/events.jsonl"),
+        cfg.rules.retention_days,
+        cfg.rules.max_events,
+    );
     if vigil::tray::tray_supported() && !no_tray {
         println!("vigil daemon: tray requested; headless daemon process remains active");
     } else {

@@ -1,28 +1,37 @@
-# Contributing to Vigil
+# Contributing to VigilFYR
 
-Thanks for your interest in improving Vigil. Security tooling must be
+Thanks for your interest in improving VigilFYR. Security tooling must be
 extra careful with changes, so please read this guide.
 
-## Development setup
+## Setup
 
 - Rust stable (see `rust-toolchain.toml`), no external services needed
+- Bun 1.1+ only for the docs site
 - `git clone` + `cargo build`
-- Test: `cargo test`
-- Format + lint: `cargo fmt --check` and `cargo clippy -- -D warnings`
 
-CI runs fmt, clippy and tests on Linux, macOS and Windows, so all three
-must stay green locally before you push.
+## Everyday commands
 
-## Docs site (docs/site drives the GitHub Pages deployment)
+    cargo build                      # compile
+    cargo test                       # unit, integration and E2E tests
+    cargo fmt --check                # formatting
+    cargo clippy --all-targets -- -D warnings
+    cargo run -- doctor              # local policy and runtime health
+    bash -n install.sh               # installer syntax
+    shellcheck install.sh            # installer lint
 
-    cd docs/site && npm ci           # deps
-    cd docs/site && npm run dev      # dev server with HMR
-    cd docs/site && npm run build    # static export to out/
+CI runs fmt, clippy and tests on Linux, macOS and Windows. Run all three
+checks before you push.
+
+## Docs site
+
+    cd docs/web && bun install       # deps
+    cd docs/web && bun run dev       # dev server with HMR
+    cd docs/web && bun run build     # production build
 
 Docs content is plain markdown in `docs/*.md`; the site imports it at
-build time, so editing a file there is all it takes. Keep `docs/index.md`
-page table and the site route list (`docs/site/lib/pages.ts`) in sync
-when adding pages.
+build time, so editing a file there is all it takes. Keep `docs/index.md`,
+the site route list (`docs/web/src/lib/pages.ts`), and README links in
+sync when adding pages.
 
 ## Ground rules
 
@@ -36,9 +45,11 @@ when adding pages.
    id users can override.
 4. **No shell interpolation for command execution.** Prefer direct
    process spawning with argument arrays.
-5. ASCII only in source and docs; no em/en dashes or section signs.
-6. Run `cargo fmt` and `cargo clippy -- -D warnings` before every
-   commit.
+5. Update documentation in the same change when behavior or policy changes.
+6. ASCII only in source and docs; no em/en dashes or section signs.
+7. Run all checks before every commit.
+8. Never add AI attribution to commits, pull requests, tags, releases or
+   changelogs.
 
 ## Pull requests
 

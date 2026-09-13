@@ -10,7 +10,11 @@ The install script detects your OS and architecture, downloads the matching rele
 curl -fsSL https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/master/install.sh | sh
 ```
 
-Supported platforms: **Linux, macOS, Windows** on **x86_64 and arm64**.
+Release artifacts provide two ways to install: the `curl`/PowerShell one-line
+installers and native installers (`.deb`, `.pkg`, and `.msi`). Portable archives
+are also useful for air-gapped or scriptable installs.
+
+Supported platforms: **Linux** (GNU/musl on x86_64, ARM64, ARMv7, RISC-V64), **macOS** (x86_64/ARM64), and **Windows** (x64/ARM64).
 
 Prefer building from source:
 
@@ -44,12 +48,15 @@ vigil setup --defaults
 - `vigil` with no arguments (or `vigil tui`) - the live report: verdicts, agents, rules, event log, export.
 - `vigil daemon` - the background guard: audit watcher plus rule sync.
 - `vigil intercept` - the hook entry point agents call before each tool action.
+- `vigil doctor` - read-only policy, agent, extension, retention and event health.
 
 ## First rules check
 
 ```sh
 vigil rules list     # active rules, in priority order
 vigil rules path     # where rules are loaded from
+vigil rules test read .env
+vigil doctor
 vigil reload         # re-read config + rules without restarting
 ```
 

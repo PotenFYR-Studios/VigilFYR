@@ -13,9 +13,13 @@ use crate::ipc::IpcRecord;
 #[derive(Debug, Default, Clone)]
 pub struct Counters {
     pub total: usize,
+    pub denied: usize,
+    pub warned: usize,
+    pub masked: usize,
     by_agent: BTreeMap<String, usize>,
     by_tool: BTreeMap<String, usize>,
     by_action: BTreeMap<String, usize>,
+    by_verdict: BTreeMap<String, usize>,
 }
 
 impl Counters {
@@ -23,11 +27,21 @@ impl Counters {
         let mut counters = Self::default();
         for record in records {
             counters.total += 1;
+            match record.verdict {
+                crate::event::VerdictAction::Deny => counters.denied += 1,
+                crate::event::VerdictAction::Warn => counters.warned += 1,
+                crate::event::VerdictAction::Mask => counters.masked += 1,
+                crate::event::VerdictAction::Allow => {}
+            }
             *counters.by_agent.entry(record.agent.clone()).or_default() += 1;
             *counters.by_tool.entry(record.tool.clone()).or_default() += 1;
             *counters
                 .by_action
                 .entry(record.action.to_string())
+                .or_default() += 1;
+            *counters
+                .by_verdict
+                .entry(record.verdict.to_string())
                 .or_default() += 1;
         }
         counters
@@ -42,6 +56,9 @@ impl Counters {
     pub fn by_action(&self) -> &BTreeMap<String, usize> {
         &self.by_action
     }
+    pub fn by_verdict(&self) -> &BTreeMap<String, usize> {
+        &self.by_verdict
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -52,6 +69,16 @@ pub struct EventRow {
     pub target: String,
     pub verdict: String,
     pub rule: String,
+    pub severity: String,
+    pub reason: String,
+}
+
+fn target(record: &IpcRecord) -> String {
+    record
+        .command
+        .clone()
+        .or_else(|| record.paths.first().map(|p| p.display().to_string()))
+        .unwrap_or_default()
 }
 
 pub fn row(record: &IpcRecord) -> EventRow {
@@ -59,14 +86,21 @@ pub fn row(record: &IpcRecord) -> EventRow {
         timestamp: record.timestamp.clone(),
         agent: record.agent.clone(),
         action: record.action.to_string(),
-        target: record
-            .command
-            .clone()
-            .or_else(|| record.paths.first().map(|p| p.display().to_string()))
-            .unwrap_or_default(),
+        target: target(record),
         verdict: record.verdict.to_string(),
         rule: record.rule.clone(),
+        severity: rule_severity(record),
+        reason: record.reason.clone(),
     }
+}
+
+fn rule_severity(record: &IpcRecord) -> String {
+    let lower = record.reason.to_lowercase();
+    ["low", "medium", "high", "critical"]
+        .into_iter()
+        .find(|severity| lower.contains(severity))
+        .unwrap_or("unknown")
+        .to_string()
 }
 
 pub fn visible(records: &[IpcRecord], filter: &str) -> Vec<EventRow> {
@@ -95,16 +129,25 @@ pub fn export(records: &[IpcRecord], format: &str) -> Result<PathBuf> {
     match format {
         "json" => fs::write(&path, serde_json::to_string_pretty(records)?)?,
         "csv" => {
-            let mut out = String::from("timestamp,agent,action,target,verdict,rule\n");
+            let mut out =
+                String::from("timestamp,agent,tool,action,target,verdict,rule,severity,reason\n");
             for row in visible(records, "") {
                 out.push_str(&format!(
-                    "{},{},{},{},{},{}\n",
+                    "{},{},{},{},{},{},{},{},{}\n",
                     row.timestamp.replace(',', ";"),
                     row.agent,
+                    target(
+                        records
+                            .iter()
+                            .find(|record| record.timestamp == row.timestamp)
+                            .expect("row came from records"),
+                    ),
                     row.action,
                     row.target.replace(',', ";"),
                     row.verdict,
-                    row.rule
+                    row.rule,
+                    row.severity,
+                    row.reason.replace(',', ";")
                 ));
             }
             fs::write(&path, out)?;
@@ -112,6 +155,45 @@ pub fn export(records: &[IpcRecord], format: &str) -> Result<PathBuf> {
         _ => anyhow::bail!("unsupported export format: {format}"),
     }
     Ok(path)
+}
+
+pub fn report_records(records: &[IpcRecord]) -> String {
+    let counters = Counters::from_records(records);
+    let mut lines = vec![
+        format!("total: {}", counters.total),
+        format!("denied: {}", counters.denied),
+        format!("warned: {}", counters.warned),
+        format!("masked: {}", counters.masked),
+    ];
+    for (verdict, count) in counters.by_verdict() {
+        lines.push(format!("verdict.{verdict}: {count}"));
+    }
+    for (agent, count) in counters.by_agent() {
+        lines.push(format!("agent.{agent}: {count}"));
+    }
+    for (action, count) in counters.by_action() {
+        lines.push(format!("action.{action}: {count}"));
+    }
+
+    let mut out = lines.join("\n");
+    out.push_str(
+        "\n\nTIME | AGENT | TOOL | ACTION | TARGET | VERDICT | RULE | SEVERITY | REASON\n",
+    );
+    for record in records {
+        out.push_str(&format!(
+            "{} | {} | {} | {} | {} | {} | {} | {} | {}\n",
+            record.timestamp,
+            record.agent,
+            record.tool,
+            record.action,
+            target(record),
+            record.verdict,
+            record.rule,
+            rule_severity(record),
+            record.reason.replace('\n', " ")
+        ));
+    }
+    out
 }
 
 pub fn snapshot(records: &[IpcRecord]) -> String {
@@ -132,14 +214,23 @@ pub fn snapshot(records: &[IpcRecord]) -> String {
     out
 }
 
-pub fn run_once(once: bool) -> Result<()> {
+pub fn run_once(once: bool, report: bool) -> Result<()> {
     if !once {
         run_interactive()?;
         return Ok(());
     }
-    let log = crate::log::EventLog::new(crate::agents::home().join(".vigil/events.jsonl"));
-    let records = log.tail(50)?;
-    print!("{}", snapshot(&records));
+    let cfg = crate::config::Config::load();
+    let log = crate::log::EventLog::new(crate::agents::home().join(".vigil/events.jsonl"))
+        .with_retention(Some(cfg.rules.retention_days), Some(cfg.rules.max_events));
+    let records = log.records()?;
+    print!(
+        "{}",
+        if report {
+            report_records(&records)
+        } else {
+            snapshot(&records)
+        }
+    );
     Ok(())
 }
 
@@ -317,9 +408,21 @@ mod tests {
     fn builds_rows_and_counters() {
         let counters = Counters::from_records(&[record(), record()]);
         assert_eq!(counters.total, 2);
+        assert_eq!(counters.denied, 2);
+        assert_eq!(counters.by_verdict().get("deny"), Some(&2));
         assert_eq!(counters.by_agent().get("claude-code"), Some(&2));
         let rows = visible(&[record()], "deny-env");
         assert_eq!(rows.len(), 1);
+    }
+
+    #[test]
+    fn report_includes_counts_and_details() {
+        let report = report_records(&[record()]);
+        assert!(report.contains("total: 1"));
+        assert!(report.contains("denied: 1"));
+        assert!(report.contains("| deny-env"));
+        assert!(report.contains("SEVERITY"));
+        assert!(report.contains("test"));
     }
 
     #[test]

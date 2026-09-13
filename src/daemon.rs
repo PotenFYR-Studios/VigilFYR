@@ -63,7 +63,7 @@ impl DaemonCore {
                 let next_server = tokio::net::windows::named_pipe::ServerOptions::new()
                     .access_inbound(true)
                     .create(PIPE_PATH)?;
-                stream.connect().await?;
+                listener.connect().await?;
                 next_server
             };
             let sender = self.sender.clone();

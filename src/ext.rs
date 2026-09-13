@@ -176,7 +176,11 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
             if !script.is_file() {
                 continue;
             }
-            let mut command = if cfg!(windows) && script_name.ends_with(".sh") {
+            let mut command = if cfg!(windows) && script_name.ends_with(".ps1") {
+                let mut command = Command::new("powershell.exe");
+                command.arg("-NoProfile").arg("-File").arg(&script);
+                command
+            } else if cfg!(windows) && script_name.ends_with(".sh") {
                 let mut command = Command::new("bash");
                 command.arg(&script);
                 command

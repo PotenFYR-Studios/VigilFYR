@@ -188,11 +188,17 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
             } else {
                 Command::new(&script)
             };
-            let mut child = command
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .spawn()
-                .with_context(|| format!("run extension hook {}", script.display()))?;
+            let mut child = match command.stdin(Stdio::piped()).stdout(Stdio::piped()).spawn() {
+                Ok(child) => child,
+                Err(error) => {
+                    // Fail-open: a broken hook script never blocks the verdict path.
+                    eprintln!(
+                        "vigil: extension hook {} failed to start: {error}",
+                        script.display()
+                    );
+                    continue;
+                }
+            };
             if let Some(stdin) = child.stdin.as_mut() {
                 if let Err(error) = stdin.write_all(record_json.as_bytes()) {
                     if error.kind() != std::io::ErrorKind::BrokenPipe {
@@ -217,7 +223,7 @@ fn wait_timeout(
 ) -> Result<std::process::Output> {
     let start = std::time::Instant::now();
     let stdout_handle = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-    if let Some(mut stdout) = child.stdout.take() {
+    let mut reader = child.stdout.take().map(|mut stdout| {
         let writer = stdout_handle.clone();
         std::thread::spawn(move || {
             let mut buffer = Vec::new();
@@ -225,16 +231,26 @@ fn wait_timeout(
             if let Ok(mut guard) = writer.lock() {
                 *guard = buffer;
             }
-        });
-    }
+        })
+    });
+    let finish = |reader: &mut Option<std::thread::JoinHandle<()>>,
+                  stdout_handle: &std::sync::Arc<std::sync::Mutex<Vec<u8>>>|
+     -> Vec<u8> {
+        // Drain the pipe before reading the shared buffer, otherwise the
+        // status can win the race and hand back truncated/empty output.
+        if let Some(handle) = reader.take() {
+            let _ = handle.join();
+        }
+        stdout_handle
+            .lock()
+            .map(|guard| guard.clone())
+            .unwrap_or_default()
+    };
     loop {
         if let Some(status) = child.try_wait()? {
             return Ok(std::process::Output {
                 status,
-                stdout: stdout_handle
-                    .lock()
-                    .map(|guard| guard.clone())
-                    .unwrap_or_default(),
+                stdout: finish(&mut reader, &stdout_handle),
                 stderr: Vec::new(),
             });
         }
@@ -243,10 +259,7 @@ fn wait_timeout(
             let status = child.wait()?;
             return Ok(std::process::Output {
                 status,
-                stdout: stdout_handle
-                    .lock()
-                    .map(|guard| guard.clone())
-                    .unwrap_or_default(),
+                stdout: finish(&mut reader, &stdout_handle),
                 stderr: Vec::new(),
             });
         }

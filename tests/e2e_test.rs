@@ -104,7 +104,7 @@ fn extension_hook_deny_overrides_verdict() {
     #[cfg(windows)]
     std::fs::write(
         ext.join("hooks/on-event.cmd"),
-        "@echo off\r\nmore\r\nexit /b 2\r\n",
+        "@echo off\r\necho {\"action\":\"deny\",\"rule\":\"hook-deny\",\"reason\":\"hook override\"}\r\nexit /b 2\r\n",
     )
     .unwrap();
 

@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 $Repo = "PotenFYR-Studios/VigilFYR"
 $InstallDir = if ($env:VIGIL_INSTALL_DIR) { $env:VIGIL_INSTALL_DIR } else { Join-Path $env:LOCALAPPDATA "Programs/Vigil" }
 $Architecture = if ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { throw "unsupported architecture" }
-$Asset = "https://github.com/$Repo/releases/latest/download/vigil-windows-$Architecture.tar.gz"
+$Asset = "https://github.com/$Repo/releases/latest/download/vigil-windows-x86_64-pc-windows-msvc.tar.gz"
 
 Write-Host "install plan: vigil-windows-$Architecture.tar.gz -> $InstallDir"
 if ($DryRun) { exit 0 }

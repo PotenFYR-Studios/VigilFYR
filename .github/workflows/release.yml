@@ -41,12 +41,30 @@ jobs:
         if: runner.os == 'Linux'
       - run: cargo build --release --target ${{ matrix.target }}
         if: runner.os != 'Linux'
-      - run: |
-          mkdir -p dist/vigil
-          cp target/${{ matrix.target }}/release/vigil* dist/vigil/ || true
-          tar -czf vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz -C dist vigil
-          shasum -a 256 vigil-*.tar.gz > vigil-*.tar.gz.sha256
+      - name: Package
         shell: bash
+        run: |
+          mkdir -p dist/vigil
+          cp "target/${{ matrix.target }}/release/vigil"* dist/vigil/ || true
+          tar -czf "vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz" -C dist vigil
+        if: runner.os != 'Windows'
+      - name: Package (Windows)
+        shell: bash
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p dist/vigil
+          cp "target/${{ matrix.target }}/release/vigil.exe" dist/vigil/
+          tar -czf "vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz" -C dist vigil
+      - name: Checksum
+        shell: bash
+        run: |
+          ARTIFACT="vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz"
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "$ARTIFACT" > "$ARTIFACT.sha256"
+          else
+            shasum -a 256 "$ARTIFACT" > "$ARTIFACT.sha256"
+          fi
+          cat "$ARTIFACT.sha256"
       - uses: softprops/action-gh-release@v2
         with:
           files: |

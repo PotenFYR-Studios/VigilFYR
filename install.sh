@@ -29,7 +29,15 @@ echo "install plan: vigil-$OS-$ARCH.tar.gz -> $INSTALL_DIR"
 if [ "$DRY_RUN" -eq 1 ]; then exit 0; fi
 
 API="https://api.github.com/repos/$REPO/releases/latest"
-ASSET="https://github.com/$REPO/releases/latest/download/vigil-$OS-$ARCH.tar.gz"
+# Artifact names come from release.yml: vigil-<platform>-<rust-target>.tar.gz
+case "$OS-$ARCH" in
+  linux-x86_64)  TGT="x86_64-unknown-linux-gnu" ;;
+  linux-arm64)   TGT="aarch64-unknown-linux-gnu" ;;
+  macos-x86_64)  TGT="x86_64-apple-darwin" ;;
+  macos-arm64)   TGT="aarch64-apple-darwin" ;;
+  *) echo "unsupported platform: $OS-$ARCH (no release artifact)" >&2; exit 1 ;;
+esac
+ASSET="https://github.com/$REPO/releases/latest/download/vigil-$OS-$TGT.tar.gz"
 CHECKSUM="$ASSET.sha256"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -39,14 +47,14 @@ curl -fL "$ASSET" -o "$TMP/vigil.tar.gz"
 curl -fL "$CHECKSUM" -o "$TMP/vigil.tar.gz.sha256"
 
 cd "$TMP"
-if command -v sha256sum >/dev/null 2>&1; then
-  sha256sum -c vigil.tar.gz.sha256
-elif command -v shasum >/dev/null 2>&1; then
-  shasum -a 256 -c vigil.tar.gz.sha256
-else
-  echo "no SHA-256 verifier available" >&2
+# Checksum file contains "vigil-<platform>-<target>.tar.gz"; verify by value.
+EXPECTED="$(cut -d' ' -f1 vigil.tar.gz.sha256)"
+ACTUAL="$(sha256sum vigil.tar.gz 2>/dev/null | cut -d' ' -f1 || shasum -a 256 vigil.tar.gz | cut -d' ' -f1)"
+if [ "$EXPECTED" != "$ACTUAL" ]; then
+  echo "checksum mismatch: expected $EXPECTED, got $ACTUAL" >&2
   exit 1
 fi
+echo "checksum OK"
 mkdir -p "$INSTALL_DIR"
 tar -xzf vigil.tar.gz
 find "$TMP" -type f -name vigil -perm -u+x -exec mv {} "$INSTALL_DIR/vigil" \;

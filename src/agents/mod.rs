@@ -46,7 +46,10 @@ pub fn detect_agents() -> Vec<AgentDef> {
 
 /// Home-relative helper shared by the per-agent modules.
 pub fn home() -> PathBuf {
-    dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
+    std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."))
 }
 
 /// True when `path` exists (dir or file).

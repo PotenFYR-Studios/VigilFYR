@@ -101,6 +101,12 @@ fn extension_hook_deny_overrides_verdict() {
         perms.set_mode(0o755);
         std::fs::set_permissions(ext.join("hooks/on-event.sh"), perms).unwrap();
     }
+    #[cfg(windows)]
+    std::fs::write(
+        ext.join("hooks/on-event.cmd"),
+        "@echo off\r\nmore\r\nexit /b 2\r\n",
+    )
+    .unwrap();
 
     let (code, stdout, stderr) = run_vigil(
         &["intercept"],

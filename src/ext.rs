@@ -176,24 +176,18 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
             if !script.is_file() {
                 continue;
             }
-            let mut command = if cfg!(windows) && script_name.ends_with(".ps1") {
-                let mut command = Command::new("powershell.exe");
-                command.arg("-NoProfile").arg("-Command").arg(format!(
-                    "$input | Out-Null; & '{}' | Write-Output -NoEnumerate",
-                    script.display()
-                ));
-                command
-            } else if cfg!(windows) && script_name.ends_with(".sh") {
+            let mut command = if cfg!(windows) && script_name.ends_with(".sh") {
                 let mut command = Command::new("bash");
-                command.arg(&script);
+                command.arg(&script).stderr(Stdio::null());
                 command
             } else {
-                Command::new(&script)
+                let mut command = Command::new(&script);
+                command.stderr(Stdio::null());
+                command
             };
             let mut child = command
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
-                .stderr(Stdio::null())
                 .spawn()
                 .with_context(|| format!("run extension hook {}", script.display()))?;
             if let Some(stdin) = child.stdin.as_mut() {

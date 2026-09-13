@@ -332,9 +332,9 @@ Contributions make the open-source community such an amazing place to learn, ins
 </a>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/output/refs/heads/master/github-snake-dark.svg" />
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/output/refs/heads/master/github-snake.svg" />
-  <img alt="Contribution snake animation" src="https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/output/refs/heads/master/github-snake.svg" width="100%" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/output/github-snake-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/output/github-snake.svg" />
+  <img alt="Contribution snake animation" src="https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/output/github-snake.svg" width="100%" />
 </picture>
 
 ---

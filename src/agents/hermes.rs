@@ -7,9 +7,7 @@ use anyhow::Result;
 use super::AgentDef;
 
 fn detect() -> bool {
-    std::env::var_os("PATH")
-        .map(|paths| std::env::split_paths(&paths).any(|dir| dir.join("hermes").is_file()))
-        .unwrap_or(false)
+    false
 }
 
 fn install_hook(_path: &Path, _mode: crate::engine::Mode) -> Result<()> {

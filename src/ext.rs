@@ -181,9 +181,7 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
                 command.arg(&script).stderr(Stdio::null());
                 command
             } else {
-                let mut command = Command::new(&script);
-                command.stderr(Stdio::null());
-                command
+                Command::new(&script)
             };
             let mut child = command
                 .stdin(Stdio::piped())

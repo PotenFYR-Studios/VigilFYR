@@ -7,7 +7,7 @@ use std::process::{Command, Stdio};
 fn shim_records_fs_event_and_propagates_exit_code() {
     let tmp = std::env::temp_dir().join(format!("vigil-shim-{}", std::process::id()));
     std::fs::create_dir_all(&tmp).unwrap();
-    let target = tmp.join("x.pem");
+    let target = tmp.join("x.txt");
 
     let mut child = Command::new(env!("CARGO_BIN_EXE_vigil"))
         .args([
@@ -34,15 +34,15 @@ fn shim_records_fs_event_and_propagates_exit_code() {
     assert_eq!(out.status.code(), Some(7), "stderr: {stderr}");
 
     // An event record (JSON line) for the observed fs event must land on
-    // stdout. The child touched a .pem inside the watched cwd.
+    // stdout. The child touched a text file inside the watched cwd.
     let event_line = stdout.lines().find(|l| {
-        l.contains("x.pem")
+        l.contains("x.txt")
             && l.contains("\"event\"")
             && serde_json::from_str::<serde_json::Value>(l).is_ok()
     });
     let line = event_line.unwrap_or_else(|| {
         panic!(
-            "no event record for x.pem on stdout\ncwd: {}\nstdout: {stdout}\nstderr: {stderr}",
+            "no event record for x.txt on stdout\ncwd: {}\nstdout: {stdout}\nstderr: {stderr}",
             tmp.display()
         )
     });

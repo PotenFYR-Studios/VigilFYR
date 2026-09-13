@@ -109,3 +109,47 @@ fn non_hookable_agents_report_no_hooks() {
     (generic.install_hook)(p, vigil::engine::Mode::Audit).unwrap();
     (generic.remove_hook)(p).unwrap();
 }
+
+#[test]
+fn codex_install_preserves_content_after_vigil_block() {
+    let home = std::env::temp_dir().join(format!("vigil-agents-codex-{}", std::process::id()));
+    let cfg_dir = home.join(".codex");
+    std::fs::create_dir_all(&cfg_dir).unwrap();
+    std::fs::write(
+        cfg_dir.join("config.toml"),
+        "model = \"gpt-x\"\n\n[vigil]\nversion = 1\nmode = \"audit\"\ncommand = \"old\"\n\n[profile.fast]\nmodel = \"mini\"\n",
+    )
+    .unwrap();
+    let _g = set_home(&home);
+
+    let agents = vigil::agents::detect_agents();
+    let codex = agents.iter().find(|a| a.id == "codex").unwrap();
+    let hook_path = &codex.hook_paths[0];
+    (codex.install_hook)(hook_path, vigil::engine::Mode::Enforce).unwrap();
+
+    let out = std::fs::read_to_string(hook_path).unwrap();
+    // User's later tables survive the re-install.
+    assert!(
+        out.contains("[profile.fast]"),
+        "trailing content kept:\n{out}"
+    );
+    assert!(out.contains("model = \"mini\""));
+    // Vigil block updated, not duplicated.
+    assert_eq!(
+        out.matches("[vigil]").count(),
+        1,
+        "single vigil block:\n{out}"
+    );
+    assert!(out.contains("mode = \"enforce\""));
+
+    // Remove keeps the user's table too.
+    (codex.remove_hook)(hook_path).unwrap();
+    let removed = std::fs::read_to_string(hook_path).unwrap();
+    assert!(!removed.contains("[vigil]"));
+    assert!(
+        removed.contains("[profile.fast]"),
+        "trailing content survives removal:\n{removed}"
+    );
+    assert!(removed.contains("model = \"gpt-x\""));
+    std::fs::remove_dir_all(&home).ok();
+}

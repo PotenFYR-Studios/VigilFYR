@@ -17,8 +17,15 @@ fn load_rules_with_builtin(dirs: &[(String, std::path::PathBuf)]) -> Vec<Rule> {
     }
     // Load each dir separately so per-rule provenance can be stamped.
     for (source, dir) in dirs {
-        let Ok(rules) = load_rules(std::slice::from_ref(dir)) else {
-            continue;
+        let rules = match load_rules(std::slice::from_ref(dir)) {
+            Ok(rules) => rules,
+            Err(e) => {
+                eprintln!(
+                    "vigil: failed to load {source} rules from {}: {e}",
+                    dir.display()
+                );
+                continue;
+            }
         };
         for mut r in rules {
             r.source = source.clone();
@@ -107,9 +114,26 @@ where
     std::fs::create_dir_all(&staging)?;
 
     let mut extracted = 0usize;
+    let mut skipped = 0usize;
     for entry in archive.entries()? {
         let mut entry = entry?;
         let path = entry.path()?.to_path_buf();
+        // Reject traversal attempts before any path join: ParentDir and
+        // absolute/RootDir components must never reach the staging dir.
+        let suspicious = path.components().any(|c| {
+            matches!(
+                c,
+                std::path::Component::ParentDir | std::path::Component::RootDir
+            )
+        });
+        if suspicious {
+            eprintln!(
+                "vigil: skipping suspicious tarball entry {:?}",
+                path.display()
+            );
+            skipped += 1;
+            continue;
+        }
         if path.extension().is_some_and(|e| e == "toml") {
             // Strip the tarball's top-level dir (e.g. vigil-rules-main/).
             let rel: PathBuf = path
@@ -140,8 +164,13 @@ where
         std::fs::remove_dir_all(remote_dir)?;
     }
     std::fs::rename(&staging, remote_dir)?;
+    let skipped_note = if skipped > 0 {
+        format!("; skipped {skipped} suspicious entries")
+    } else {
+        String::new()
+    };
     Ok(format!(
-        "updated {} rule files in {}",
+        "updated {} rule files in {}{skipped_note}",
         extracted,
         remote_dir.display()
     ))
@@ -254,5 +283,62 @@ mod tests {
         assert_eq!(r.source, "");
         let _ = Action::Read;
         let _ = builtin_rules().len();
+    }
+
+    #[test]
+    fn sync_rejects_traversal_entries() {
+        let root = tmp("traversal");
+        let remote = root.join("remote");
+        fs::create_dir_all(&root).unwrap();
+
+        // Tarball with a legit file and a `../evil.toml` escape attempt.
+        // The tar crate refuses to *write* `..` paths, so the malicious
+        // entry is emitted as raw 512-byte ustar headers.
+        let tar_path = root.join("evil.tar.gz");
+        {
+            let f = fs::File::create(&tar_path).unwrap();
+            let gz = flate2::write::GzEncoder::new(f, flate2::Compression::fast());
+            let mut tar = tar::Builder::new(gz);
+            let good = b"id = \"good\"\nscope = [\"read\"]\npaths = [\"p\"]\naction = \"allow\"\n";
+            let mut header = tar::Header::new_gnu();
+            header.set_size(good.len() as u64);
+            header.set_cksum();
+            tar.append_data(&mut header, "vigil-rules-main/good.toml", &good[..])
+                .unwrap();
+
+            // Hand-rolled entry: name "vigil-rules-main/../evil.toml".
+            let mut raw = [0u8; 512];
+            let name = b"vigil-rules-main/../evil.toml";
+            raw[..name.len()].copy_from_slice(name);
+            raw[100..108].copy_from_slice(b"0000644\0"); // mode
+            raw[108..116].copy_from_slice(b"0000000\0"); // uid
+            raw[116..124].copy_from_slice(b"0000000\0"); // gid
+            raw[124..136].copy_from_slice(b"00000000074\0"); // size = 60
+            raw[136..148].copy_from_slice(b"00000000000\0"); // mtime
+            raw[156] = b'0'; // regular file
+            raw[257..262].copy_from_slice(b"ustar");
+            raw[263..265].copy_from_slice(b"00");
+            raw[148..156].copy_from_slice(b"        "); // spaces during calc
+            let cksum: u32 = raw.iter().map(|b| *b as u32).sum();
+            raw[148..156].copy_from_slice(format!("{:06o}\0 ", cksum).as_bytes());
+            use std::io::Write as _;
+            tar.get_mut().write_all(&raw).unwrap();
+            tar.get_mut().write_all(good).unwrap();
+            // Two zero blocks terminate the archive.
+            tar.get_mut().write_all(&[0u8; 1024]).unwrap();
+            tar.into_inner().unwrap().finish().unwrap();
+        }
+        let bytes = fs::read(&tar_path).unwrap();
+
+        let dirs = vec![("remote".to_string(), remote.clone())];
+        let fetch = move |_url: &str| -> Result<Vec<u8>> { Ok(bytes.clone()) };
+        let note = sync_remote_rules_into(&dirs, fetch).unwrap();
+        assert!(note.contains("updated"), "good file still lands: {note}");
+        assert!(remote.join("good.toml").is_file());
+        assert!(
+            !root.join("evil.toml").exists(),
+            "traversal entry must not escape the staging dir"
+        );
+        fs::remove_dir_all(&root).ok();
     }
 }

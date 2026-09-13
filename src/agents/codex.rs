@@ -24,40 +24,35 @@ fn install_hook(path: &Path, mode: Mode) -> Result<()> {
         std::fs::create_dir_all(parent)?;
     }
     let current = std::fs::read_to_string(path).unwrap_or_default();
-    let mut cfg: toml::Value =
-        toml::from_str(&current).unwrap_or(toml::Value::Table(Default::default()));
-    let table = cfg
-        .as_table_mut()
-        .context("codex config root is not a table")?;
-    let vigil = format!(
-        "[vigil]\nversion = 1\nmode = \"{}\"\ncommand = \"vigil intercept\"\n",
-        mode
-    );
-    // Idempotent: parse existing vigil table out, replace wholesale.
-    let mut merged = String::new();
-    for line in current.lines() {
-        if line.trim() == "[vigil]" {
-            break;
-        }
-        merged.push_str(line);
-        merged.push('\n');
-    }
-    merged.push_str(&vigil);
-    let _ = table; // kept for structure checks; text merge preserves comments above [vigil]
+    let merged = set_vigil_table(&current, mode)?;
     std::fs::write(path, merged)?;
     Ok(())
 }
 
-fn remove_hook(path: &Path) -> Result<()> {
-    let current = std::fs::read_to_string(path).context("reading codex config")?;
-    let mut out = String::new();
+/// Rewrite the `[vigil]` table in `text`, preserving every other line —
+/// including content after the block (other tables, comments). Idempotent.
+fn set_vigil_table(text: &str, mode: Mode) -> Result<String> {
+    let vigil_block = format!(
+        "[vigil]\nversion = 1\nmode = \"{}\"\ncommand = \"vigil intercept\"\n",
+        mode
+    );
+    let mut out = String::with_capacity(text.len() + vigil_block.len());
     let mut in_vigil = false;
-    for line in current.lines() {
-        if line.trim() == "[vigil]" {
-            in_vigil = true;
-            continue;
-        }
-        if in_vigil && line.trim_start().starts_with('[') {
+    let mut vigil_seen = false;
+    for line in text.lines() {
+        let is_header = line.trim_start().starts_with('[');
+        if is_header {
+            let name = line.trim().trim_start_matches('[').trim_end_matches(']');
+            if name == "vigil" {
+                // Replace or drop the existing block; write the new one at
+                // the position of the first occurrence only.
+                in_vigil = true;
+                if !vigil_seen {
+                    vigil_seen = true;
+                    out.push_str(&vigil_block);
+                }
+                continue;
+            }
             in_vigil = false;
         }
         if !in_vigil {
@@ -65,6 +60,37 @@ fn remove_hook(path: &Path) -> Result<()> {
             out.push('\n');
         }
     }
+    if !vigil_seen {
+        if !out.is_empty() && !out.ends_with("\n\n") {
+            out.push('\n');
+        }
+        out.push_str(&vigil_block);
+    }
+    // Sanity: result must still parse as TOML.
+    let _: toml::Value =
+        toml::from_str(&out).context("merged codex config must stay valid TOML")?;
+    Ok(out)
+}
+
+fn remove_hook(path: &Path) -> Result<()> {
+    let current = std::fs::read_to_string(path).context("reading codex config")?;
+    let mut out = String::new();
+    let mut in_vigil = false;
+    for line in current.lines() {
+        if line.trim_start().starts_with('[') {
+            let name = line.trim().trim_start_matches('[').trim_end_matches(']');
+            in_vigil = name == "vigil";
+            if in_vigil {
+                continue;
+            }
+        }
+        if !in_vigil {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    let _: toml::Value =
+        toml::from_str(&out).context("stripped codex config must stay valid TOML")?;
     std::fs::write(path, out)?;
     Ok(())
 }

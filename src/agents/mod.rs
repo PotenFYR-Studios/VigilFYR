@@ -94,7 +94,7 @@ pub(crate) mod json_settings {
 
     /// Merge `entry` into `hooks.<event>` (Claude Code native hook shape:
     /// `hooks.PreToolUse: [{matcher, hooks: [{type: "command", command}]}]`).
-    /// An existing vigil entry in the array is replaced in place — re-run
+    /// An existing vigil entry in the array is replaced in place - re-run
     /// updates, never duplicates. All other keys and entries survive.
     pub fn set_hook_entry(text: &str, event: &str, entry: &Value) -> Result<String> {
         let mut v: Value = serde_json::from_str(text)?;

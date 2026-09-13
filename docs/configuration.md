@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Config lives at `~/.vigil/config.toml`. **A missing file means defaults** — Vigil runs fine with no config at all. Values below are the defaults.
+Config lives at `~/.vigil/config.toml`. **A missing file means defaults** - Vigil runs fine with no config at all. Values below are the defaults.
 
 ```toml
 [general]
@@ -48,7 +48,7 @@ Unknown keys error with `unknown config key: <key>`; invalid values error with `
 | Key | Type | Default | Notes |
 | :--- | :--- | :--- | :--- |
 | `general.enabled` | bool | `true` | Master switch; `false` disables the guard |
-| `general.mode` | `enforce` \| `audit` | `enforce` | `audit` demotes every `deny` to `warn` — nothing blocks |
+| `general.mode` | `enforce` \| `audit` | `enforce` | `audit` demotes every `deny` to `warn` - nothing blocks |
 | `daemon.autostart` | bool | `true` | Daemon starts on login |
 | `daemon.tray` | bool | `true` | Tray icon; `vigil update` availability shows here |
 | `masking.enabled` | bool | `false` | Opt-in; see [Masking](masking.md) |
@@ -76,6 +76,6 @@ vigil reload
 
 ## Related
 
-- [Getting Started](getting-started.md) — install and the setup wizard
-- [Rules Reference](rules.md) — rule schema and precedence
-- [Security model](security-model.md) — fail-open behavior and its trade-offs
+- [Getting Started](getting-started.md) - install and the setup wizard
+- [Rules Reference](rules.md) - rule schema and precedence
+- [Security model](security-model.md) - fail-open behavior and its trade-offs

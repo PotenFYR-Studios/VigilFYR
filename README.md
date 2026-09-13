@@ -23,9 +23,9 @@ curl -fsSL https://raw.githubusercontent.com/PotenFYR-Studios/VigilFYR/master/in
 
 ## Overview
 
-Vigil is a local guard for AI coding agents: it sits between your agent and your filesystem and blocks reads, writes, searches, and commands that touch sensitive areas — `.env` files, secrets directories, SSH and AWS credentials, private keys, crypto wallets, system paths. Hooks are auto-installed for agents that support them; a filesystem-watch audit mode and the `vigil shim` wrapper cover everything else.
+Vigil is a local guard for AI coding agents: it sits between your agent and your filesystem and blocks reads, writes, searches, and commands that touch sensitive areas - `.env` files, secrets directories, SSH and AWS credentials, private keys, crypto wallets, system paths. Hooks are auto-installed for agents that support them; a filesystem-watch audit mode and the `vigil shim` wrapper cover everything else.
 
-Because it guards the tool actions on your machine, it is **proxy-proof**: it works identically behind any LLM API proxy or router (9router, LiteLLM, corporate gateways) — the model never sees what the tool never touched.
+Because it guards the tool actions on your machine, it is **proxy-proof**: it works identically behind any LLM API proxy or router (9router, LiteLLM, corporate gateways) - the model never sees what the tool never touched.
 
 Built by **PotenFYR Studios**.
 
@@ -35,9 +35,9 @@ Built by **PotenFYR Studios**.
 
 - Every tool call is evaluated against the ruleset **before it executes**, with a strict exit-code contract: `0` allow, `2` deny, `3` ask.
 - Verdicts are local and synchronous. Hook execution never waits on the daemon; a dead or restarting daemon never delays or breaks your agent.
-- On daemon or ruleset error the hook **fails open** — a broken guard must never break your workflow. Calibration mode (`audit`) demotes every `deny` to `warn`, so nothing is ever blocked while you tune rules.
+- On daemon or ruleset error the hook **fails open** - a broken guard must never break your workflow. Calibration mode (`audit`) demotes every `deny` to `warn`, so nothing is ever blocked while you tune rules.
 - Rules layer deterministically: built-in core ruleset → `~/.vigil/rules/*.toml` → `./.vigil/rules/*.toml`, overriding by rule id, so your local rules always win.
-- Masking is opt-in and preserves a 4-character prefix so you can still tell which secret was matched — and it never emits more than that.
+- Masking is opt-in and preserves a 4-character prefix so you can still tell which secret was matched - and it never emits more than that.
 - Vigil inspects local tool actions, not network traffic. Which LLM API, proxy, or router you use is irrelevant: same rules, same verdicts, everywhere.
 
 ---
@@ -45,13 +45,13 @@ Built by **PotenFYR Studios**.
 ## Features
 
 ### Enforcement, three layers deep
-- **Hooks (block before it runs)** — `vigil setup` detects installed agents and wires their native hook systems automatically. Every read, write, search, exec, and net action is checked first.
-- **Audit watcher (warn, never block)** — a filesystem watcher records sensitive-area access by any process; for agents without hooks.
-- **`vigil shim` (wrap anything)** — `vigil shim <command>…` puts arbitrary commands under the same rule evaluation.
-- Enforcement where possible, visibility everywhere — no agent gets a free pass; only enforcement depth differs.
+- **Hooks (block before it runs)** - `vigil setup` detects installed agents and wires their native hook systems automatically. Every read, write, search, exec, and net action is checked first.
+- **Audit watcher (warn, never block)** - a filesystem watcher records sensitive-area access by any process; for agents without hooks.
+- **`vigil shim` (wrap anything)** - `vigil shim <command>…` puts arbitrary commands under the same rule evaluation.
+- Enforcement where possible, visibility everywhere - no agent gets a free pass; only enforcement depth differs.
 
 ### Rules
-- Built-in core ruleset: `.env` files, secrets dirs, `.ssh/`, `.aws/`, `.gnupg/`, key and credentials files, wallet directories, system paths — plus exec guards for `rm -rf /`, `sudo` system writes, and cloud metadata endpoints.
+- Built-in core ruleset: `.env` files, secrets dirs, `.ssh/`, `.aws/`, `.gnupg/`, key and credentials files, wallet directories, system paths - plus exec guards for `rm -rf /`, `sudo` system writes, and cloud metadata endpoints.
 - Rule schema with severities and priorities; first match wins, most specific first.
 - Remote rule sync from the community feed on boot and `vigil reload`; `vigil rules update` refreshes on demand.
 - Override any built-in rule by id from `~/.vigil/rules/` or `./.vigil/rules/`.
@@ -65,7 +65,7 @@ Built by **PotenFYR Studios**.
 - `vigil update` self-updates the binary (semver check plus commits-behind, surfaced in the tray and TUI).
 
 ### Live report
-- `vigil tui` is the default command: every verdict, who triggered it, which agent, and why — rule id and severity included — with a scrollable event log and export.
+- `vigil tui` is the default command: every verdict, who triggered it, which agent, and why - rule id and severity included - with a scrollable event log and export.
 
 ### Extensions
 - Drop a `manifest.toml` into `~/.vigil/extensions/<name>/` to add your own rules, masking patterns, and event hooks. No fork required.
@@ -78,9 +78,9 @@ Built by **PotenFYR Studios**.
 |---|---|
 | Hook path | Local, synchronous evaluation; exit codes `0`/`2`/`3`; fail-open only on daemon/ruleset error |
 | Rule engine | Layered rulesets, id-based override, first-match-wins, severity tagging |
-| Rules supply chain | Community feed sync, checksum-free but id-addressable — local files always override remote |
+| Rules supply chain | Community feed sync, checksum-free but id-addressable - local files always override remote |
 | Sensitive data | Masking opt-in, 4-char prefix cap, patterns never log matched secret bodies |
-| Coverage | Hooks (enforce) + audit watcher + shim — universal visibility, best-effort enforcement |
+| Coverage | Hooks (enforce) + audit watcher + shim - universal visibility, best-effort enforcement |
 | Failure mode | Audit mode demotes deny→warn; daemon unavailability never blocks tool calls |
 
 Full threat model and honest limits: [docs/security-model.md](docs/security-model.md).
@@ -182,7 +182,7 @@ vigil config set masking.enabled true
 | `rules.remote_update` | `true` | Sync community rules on boot / `vigil reload` |
 | `agents.<id>` | `claude-code=enforce` | Per-agent mode: `off`, `audit`, `enforce` |
 
-Rules layering: built-in core ruleset → `~/.vigil/rules/*.toml` → `./.vigil/rules/*.toml` (later files override earlier ones **by rule id**; within a file, order is priority — first match wins). `vigil reload` applies everything without a restart.
+Rules layering: built-in core ruleset → `~/.vigil/rules/*.toml` → `./.vigil/rules/*.toml` (later files override earlier ones **by rule id**; within a file, order is priority - first match wins). `vigil reload` applies everything without a restart.
 
 Full schema and cookbook: [Rules Reference](docs/rules.md) · [Configuration Reference](docs/configuration.md).
 
@@ -198,7 +198,7 @@ Full schema and cookbook: [Rules Reference](docs/rules.md) · [Configuration Ref
 | Cursor | 🪝 native hooks | ✅ | ✅ |
 | OpenCode | 🪝 native hooks | ✅ | ✅ |
 | Hermes | 🪝 native hooks | ✅ | ✅ |
-| anything else | — | ✅ | ✅ |
+| anything else | - | ✅ | ✅ |
 
 `vigil setup` auto-detects which of these are installed and configures the best mode for each; `vigil agents list|install|remove` manages hooks explicitly. Full matrix: [docs/agents.md](docs/agents.md).
 
@@ -268,7 +268,7 @@ Same version, new commits = CI green, nothing published. Bumped version = new ta
                                                          └──────────────────┘
 ```
 
-Hook verdicts are computed locally and synchronously — the daemon is a reporter, not a gatekeeper. Every matched event lands in the event log with the agent, action, rule id, and severity, visible in `vigil tui`.
+Hook verdicts are computed locally and synchronously - the daemon is a reporter, not a gatekeeper. Every matched event lands in the event log with the agent, action, rule id, and severity, visible in `vigil tui`.
 
 ---
 
@@ -284,9 +284,9 @@ version = "0.1.0"
 description = "Company-internal rules"
 
 # files alongside the manifest are picked up:
-# rules/*.toml     — same schema as the core ruleset
-# patterns/*.toml  — reusable masking patterns
-# hooks/*.toml     — event hooks
+# rules/*.toml     - same schema as the core ruleset
+# patterns/*.toml  - reusable masking patterns
+# hooks/*.toml     - event hooks
 ```
 
 Authoring guide: [Extensions](docs/extensions.md).
@@ -343,7 +343,7 @@ Contributions make the open-source community such an amazing place to learn, ins
 
 Capability-based detection rather than distro assumptions. Works wherever Rust stable builds and the agent exists: Linux (systemd user units for autostart), macOS (launchd), Windows (autostart + tray). Release targets: x86_64 and arm64 across all three OSes.
 
-Vigil is fully local: no telemetry, no cloud calls — the only outbound requests are the rule feed and update checks, both configurable off.
+Vigil is fully local: no telemetry, no cloud calls - the only outbound requests are the rule feed and update checks, both configurable off.
 
 ---
 

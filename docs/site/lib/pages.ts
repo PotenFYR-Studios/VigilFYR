@@ -21,7 +21,7 @@ export const pages: DocPage[] = [
     href: "/masking",
     title: "Masking",
     blurb:
-      "Opt-in redaction of AWS keys, GitHub PATs, OpenAI keys, JWTs, private keys, env values — 4-char prefix preserved.",
+      "Opt-in redaction of AWS keys, GitHub PATs, OpenAI keys, JWTs, private keys, env values - 4-char prefix preserved.",
   },
   {
     href: "/agents",

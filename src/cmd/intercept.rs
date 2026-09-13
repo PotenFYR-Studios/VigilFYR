@@ -1,4 +1,4 @@
-//! `vigil intercept` — the hot path agents call through their hooks.
+//! `vigil intercept` - the hot path agents call through their hooks.
 //! Event JSON on stdin, verdict JSON on stdout, human note on stderr.
 
 use std::sync::OnceLock;

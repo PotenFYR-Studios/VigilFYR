@@ -47,7 +47,7 @@ vigil rules list   # deny-tfstate appears in priority order`}</code>
 
       <h2>Sharing</h2>
       <p>
-        An extension folder is self-contained — commit it to a repo; teammates
+        An extension folder is self-contained - commit it to a repo; teammates
         install by copying into <code>~/.vigil/extensions/</code>. Rule ids
         from extensions join the same override chain: an extension rule with{" "}
         <code>id = &quot;deny-env-files&quot;</code> overrides the built-in of

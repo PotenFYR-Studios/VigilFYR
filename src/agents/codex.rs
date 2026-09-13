@@ -29,7 +29,7 @@ fn install_hook(path: &Path, mode: Mode) -> Result<()> {
     Ok(())
 }
 
-/// Rewrite the `[vigil]` table in `text`, preserving every other line —
+/// Rewrite the `[vigil]` table in `text`, preserving every other line -
 /// including content after the block (other tables, comments). Idempotent.
 fn set_vigil_table(text: &str, mode: Mode) -> Result<String> {
     let vigil_block = format!(

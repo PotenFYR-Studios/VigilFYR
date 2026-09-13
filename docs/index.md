@@ -1,6 +1,6 @@
 # Vigil Docs
 
-The AI-agent guard: blocks Claude Code, Codex, Gemini CLI, Cursor, OpenCode, and Hermes from reading, writing, searching, or executing in sensitive areas — secrets, `.env`, keys, `.ssh`, `.aws`, wallets, system dirs.
+The AI-agent guard: blocks Claude Code, Codex, Gemini CLI, Cursor, OpenCode, and Hermes from reading, writing, searching, or executing in sensitive areas - secrets, `.env`, keys, `.ssh`, `.aws`, wallets, system dirs.
 
 ## Pages
 

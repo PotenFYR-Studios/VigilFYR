@@ -1,4 +1,4 @@
-//! `vigil agents list|install|remove` — hook lifecycle per agent.
+//! `vigil agents list|install|remove` - hook lifecycle per agent.
 
 use anyhow::{bail, Result};
 
@@ -22,7 +22,7 @@ fn resolve_targets(which: Option<&str>) -> Result<Vec<AgentDef>> {
     }
 }
 
-/// `vigil agents list` — table of id, hooks support, detection, install state.
+/// `vigil agents list` - table of id, hooks support, detection, install state.
 pub fn agents_list() -> Result<()> {
     let known = all_agents();
     let detected = detect_agents();
@@ -54,7 +54,7 @@ pub fn agents_list() -> Result<()> {
     Ok(())
 }
 
-/// `vigil agents install [agent|all]` — install/update hooks. Agents
+/// `vigil agents install [agent|all]` - install/update hooks. Agents
 /// without hook surfaces get printed guidance and audit-mode marking.
 pub fn agents_install(which: Option<&str>) -> Result<()> {
     let targets = resolve_targets(which)?;
@@ -62,7 +62,7 @@ pub fn agents_install(which: Option<&str>) -> Result<()> {
         let detected = detect_agents().iter().any(|d| d.id == a.id);
         if !a.supports_hooks || a.hook_paths.is_empty() {
             println!(
-                "{}: no hook API; running in audit mode — use `vigil shim -- <cmd>` to monitor it",
+                "{}: no hook API; running in audit mode - use `vigil shim -- <cmd>` to monitor it",
                 a.id
             );
             continue;
@@ -83,7 +83,7 @@ pub fn agents_install(which: Option<&str>) -> Result<()> {
     Ok(())
 }
 
-/// `vigil agents remove [agent|all]` — remove vigil hook entries only.
+/// `vigil agents remove [agent|all]` - remove vigil hook entries only.
 pub fn agents_remove(which: Option<&str>) -> Result<()> {
     let targets = resolve_targets(which)?;
     for a in &targets {

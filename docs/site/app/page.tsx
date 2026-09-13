@@ -18,7 +18,7 @@ export default function Home() {
         Every read. Every write. Every command.
       </h1>
       <p className="mt-6 max-w-2xl text-zinc-400">
-        Vigil blocks AI coding agents from sensitive areas of your machine —
+        Vigil blocks AI coding agents from sensitive areas of your machine -
         secrets, <code>.env</code>, keys, <code>.ssh</code>, <code>.aws</code>,
         wallets, system dirs. Native hooks for supported agents, filesystem
         audit and the <code>vigil shim</code> wrapper for everything else.

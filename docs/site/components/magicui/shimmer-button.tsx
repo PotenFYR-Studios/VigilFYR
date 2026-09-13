@@ -12,7 +12,7 @@ interface ShimmerButtonProps
   borderRadius?: string;
 }
 
-/** Magic UI: ShimmerButton — animated shine sweep across a gradient button. */
+/** Magic UI: ShimmerButton - animated shine sweep across a gradient button. */
 export function ShimmerButton({
   children,
   className,

@@ -3,7 +3,7 @@ import { DocShell } from "@/components/doc-shell";
 const layers: [string, string, string][] = [
   ["Hooks", "blocks", "Hook-capable agents (Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Hermes)"],
   ["Shim", "wraps", "Any command explicitly routed through vigil shim"],
-  ["Audit", "warns only", "Any process touching watched areas — detection, not prevention"],
+  ["Audit", "warns only", "Any process touching watched areas - detection, not prevention"],
 ];
 
 export default function SecurityModel() {
@@ -11,7 +11,7 @@ export default function SecurityModel() {
     <DocShell title="Security Model & Limitations" active="/security-model">
       <p>
         Vigil is a policy gate between an AI agent&apos;s tools and your
-        filesystem. Every tool action — read, write, search, exec, net — is
+        filesystem. Every tool action - read, write, search, exec, net - is
         evaluated before (hooks), around (shim), or after the fact (audit).
       </p>
 
@@ -19,13 +19,13 @@ export default function SecurityModel() {
       <ul className="mt-4 space-y-2 text-sm">
         {layers.map(([l, cov, who]) => (
           <li key={l}>
-            <strong className="text-zinc-100">{l}</strong> — {cov} — {who}.
+            <strong className="text-zinc-100">{l}</strong> - {cov} - {who}.
           </li>
         ))}
       </ul>
       <p>
         Hooks cover hookable agents; audit and shim are for the rest. Nothing
-        blocks an arbitrary, unhooked, unshimmed process — that is what OS
+        blocks an arbitrary, unhooked, unshimmed process - that is what OS
         permissions are for. Vigil complements them.
       </p>
 
@@ -34,8 +34,8 @@ export default function SecurityModel() {
         On daemon error, ruleset load error, or hook malfunction, Vigil
         <strong> allows the action</strong> (exit code <code>0</code>). A guard
         sitting in every tool call&apos;s critical path must not be able to
-        take your workflow down, and the threat model — an AI agent fumbling
-        toward your secrets — is not a determined attacker who could be slowed
+        take your workflow down, and the threat model - an AI agent fumbling
+        toward your secrets - is not a determined attacker who could be slowed
         by fail-closed behavior. Audit logging and TUI daemon health surface
         transient failures.
       </p>

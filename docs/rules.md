@@ -2,12 +2,12 @@
 
 Rules are TOML files. Vigil loads, in order:
 
-1. **Built-in core ruleset** — embedded in the binary (`rules/core.toml` at build time).
-2. **User rules** — `~/.vigil/rules/*.toml`
-3. **Project rules** — `./.vigil/rules/*.toml` (highest precedence for shared, per-project policy)
-4. **Remote feed** — community rules synced on boot and `vigil reload` (disable with `rules.remote_update = false`)
+1. **Built-in core ruleset** - embedded in the binary (`rules/core.toml` at build time).
+2. **User rules** - `~/.vigil/rules/*.toml`
+3. **Project rules** - `./.vigil/rules/*.toml` (highest precedence for shared, per-project policy)
+4. **Remote feed** - community rules synced on boot and `vigil reload` (disable with `rules.remote_update = false`)
 
-Later sources override earlier ones **by rule id**: a rule in `~/.vigil/rules/` with `id = "deny-env-files"` replaces the built-in rule of the same id. Within a single file, order is priority — **first matching rule wins**, so keep the most specific rules first. No match means **allow** (fail-open).
+Later sources override earlier ones **by rule id**: a rule in `~/.vigil/rules/` with `id = "deny-env-files"` replaces the built-in rule of the same id. Within a single file, order is priority - **first matching rule wins**, so keep the most specific rules first. No match means **allow** (fail-open).
 
 ## Schema
 
@@ -26,11 +26,11 @@ enabled = true                       # default: true
 
 Field notes:
 
-- **`scope`** — event actions: `read`, `write`, `search`, `exec`, `net`.
-- **`paths`** — globset globs. `**` spans directories. A rule matches when *any* pattern matches *any* path on the event.
-- **`commands`** — Rust `regex` crate syntax, matched against the full command line of `exec`/`net` events. A rule matches when *any* command regex matches.
+- **`scope`** - event actions: `read`, `write`, `search`, `exec`, `net`.
+- **`paths`** - globset globs. `**` spans directories. A rule matches when *any* pattern matches *any* path on the event.
+- **`commands`** - Rust `regex` crate syntax, matched against the full command line of `exec`/`net` events. A rule matches when *any* command regex matches.
 - A rule fires if **either** a path hits **or** a command hits (both checked; at least one must match).
-- **`agents`** — restricts a rule to specific agents. Empty list = every agent.
+- **`agents`** - restricts a rule to specific agents. Empty list = every agent.
 
 ## Actions and exit codes
 
@@ -40,10 +40,10 @@ Field notes:
 | `warn` | Allow, but record and flag in the TUI | `0` |
 | `allow` | Explicitly allow (escape hatch past earlier broad rules) | `0` |
 | `mask` | Redact sensitive content before the agent sees it (requires masking enabled) | `0` |
-| — no match | Default: allow, logged as rule `default` | `0` |
-| *audit mode* | Every `deny` is demoted to `warn` — nothing is blocked | `0` |
+| - no match | Default: allow, logged as rule `default` | `0` |
+| *audit mode* | Every `deny` is demoted to `warn` - nothing is blocked | `0` |
 
-Exit code `3` (**ask**) is reserved for interactive confirmation by the calling agent. On daemon or ruleset error the hook **fails open** (allow) — a broken guard must never break your agent.
+Exit code `3` (**ask**) is reserved for interactive confirmation by the calling agent. On daemon or ruleset error the hook **fails open** (allow) - a broken guard must never break your agent.
 
 ## Cookbook
 
@@ -67,7 +67,7 @@ action = "allow"
 severity = "low"
 ```
 
-`allow-internal-templates` must come **first** — first match wins.
+`allow-internal-templates` must come **first** - first match wins.
 
 Block destructive commands (patterns match the full command line):
 
@@ -94,7 +94,7 @@ action = "deny"
 severity = "high"
 ```
 
-Audit-mode canary — watch, don't block, while calibrating:
+Audit-mode canary - watch, don't block, while calibrating:
 
 ```toml
 [[rule]]
@@ -106,7 +106,7 @@ action = "warn"
 severity = "low"
 ```
 
-Or flip the whole daemon to audit: `vigil config set general.mode audit` (then `vigil reload`). Demotion applies per verdict, so mixing `warn` and `deny` rules is fine — in audit mode everything behaves as `warn`.
+Or flip the whole daemon to audit: `vigil config set general.mode audit` (then `vigil reload`). Demotion applies per verdict, so mixing `warn` and `deny` rules is fine - in audit mode everything behaves as `warn`.
 
 Disable a built-in rule without deleting it:
 
@@ -117,7 +117,7 @@ id = "warn-net-curl-pipe-shell"
 enabled = false
 ```
 
-(Keep the required fields — `scope`, `paths` — to satisfy the schema.)
+(Keep the required fields - `scope`, `paths` - to satisfy the schema.)
 
 ## Built-in rules at a glance
 

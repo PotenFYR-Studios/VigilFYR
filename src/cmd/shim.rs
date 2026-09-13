@@ -1,4 +1,4 @@
-//! `vigil shim` — monitoring wrapper for agents (and plain commands)
+//! `vigil shim` - monitoring wrapper for agents (and plain commands)
 //! without hook APIs. Spawns the child with a notify watcher over the
 //! loaded rules' paths and emits event records for observed filesystem
 //! activity; in enforce mode denied paths are logged as deny events.
@@ -60,7 +60,7 @@ fn event_record(
     })
 }
 
-/// `vigil shim -- <cmd> …` — run the child, watch, record.
+/// `vigil shim -- <cmd> …` - run the child, watch, record.
 pub fn shim(args: ShimArgs, cmd: &[String]) -> Result<()> {
     if cmd.is_empty() {
         anyhow::bail!("usage: vigil shim [--cwd DIR] -- <cmd> [args…]");
@@ -246,7 +246,7 @@ fn record_event(
     }
     if verdict.action == VerdictAction::Deny {
         eprintln!(
-            "vigil shim: deny {} {} (rule {}; monitoring only — hooks enforce)",
+            "vigil shim: deny {} {} (rule {}; monitoring only - hooks enforce)",
             action,
             paths[0].display(),
             verdict.rule

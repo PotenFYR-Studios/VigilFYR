@@ -15,7 +15,7 @@ export default function Masking() {
       <p>
         Masking redacts sensitive values before an agent sees them, keeping the{" "}
         <strong>first 4 characters</strong> so you can still tell which secret
-        it was. <strong>Off by default</strong> — opt in because it changes
+        it was. <strong>Off by default</strong> - opt in because it changes
         what agents see.
       </p>
 
@@ -30,7 +30,7 @@ vigil reload`}</code>
         {patterns.map(([id, what]) => (
           <li key={id} className="text-sm">
             <code className="text-sky-300">{id}</code>
-            <span className="text-zinc-400"> — {what}</span>
+            <span className="text-zinc-400"> - {what}</span>
           </li>
         ))}
       </ul>
@@ -39,7 +39,7 @@ vigil reload`}</code>
       <p>
         Masking is a verdict action: rules with <code>action = &quot;mask&quot;</code>{" "}
         mark matched paths for redaction on <code>read</code>/<code>search</code>{" "}
-        results flowing to the agent. Writes are unaffected. First match wins —
+        results flowing to the agent. Writes are unaffected. First match wins -
         put <code>mask</code> rules before broader <code>deny</code> rules to
         redact instead of block:
       </p>

@@ -1,6 +1,6 @@
 # vigil-docs
 
-Documentation site for VigilFYR — Next.js (static export) + Tailwind CSS +
+Documentation site for VigilFYR - Next.js (static export) + Tailwind CSS +
 Magic UI component style.
 
 Pages mirror the markdown docs in `docs/`:

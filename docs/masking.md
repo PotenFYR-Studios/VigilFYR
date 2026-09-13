@@ -26,11 +26,11 @@ Six pattern families ship enabled by default:
 | `private_key` | PEM private key blocks (`-----BEGIN … PRIVATE KEY-----`) |
 | `env_values` | Values assigned in env-style files (`SECRET=…`) |
 
-Example — `AKIAIOSFODNN7EXAMPLE` becomes `AKIA••••••••••••••••` (4-char prefix preserved); the exact replacement form is applied at the content layer before the agent's tool result is returned.
+Example - `AKIAIOSFODNN7EXAMPLE` becomes `AKIA••••••••••••••••` (4-char prefix preserved); the exact replacement form is applied at the content layer before the agent's tool result is returned.
 
 ## Scope
 
-Masking is a **verdict action**: rules with `action = "mask"` mark matched paths for redaction. It applies on `read`/`search` results flowing to the agent. Writes are unaffected — masking protects what leaves your disk toward the model, not what gets written to it.
+Masking is a **verdict action**: rules with `action = "mask"` mark matched paths for redaction. It applies on `read`/`search` results flowing to the agent. Writes are unaffected - masking protects what leaves your disk toward the model, not what gets written to it.
 
 Write your own masking rule:
 
@@ -60,7 +60,7 @@ action = "mask"
 severity = "high"
 
 # the built-in deny-env-files (also matching **/.env) now only fires
-# for write/search — reads of .env get masked values instead of a block
+# for write/search - reads of .env get masked values instead of a block
 ```
 
 Check current state:

@@ -80,7 +80,7 @@ fn real_fetch(url: &str) -> Result<Vec<u8>> {
 
 /// Download the remote rules tarball into `<remote dir>`, extracting only
 /// `*.toml` files (tarball path prefixes stripped). On any network or
-/// parse error the existing copy is kept and a note returned — never fail.
+/// parse error the existing copy is kept and a note returned - never fail.
 /// Gated by `rules.remote_update` when disabled skips the fetch entirely.
 pub fn sync_remote_rules(cfg: &Config) -> Result<String> {
     if !cfg.rules.remote_update {

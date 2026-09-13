@@ -12,7 +12,7 @@ interface BorderBeamProps {
   delay?: number;
 }
 
-/** Magic UI: BorderBeam — orbiting gradient beam along a container border. */
+/** Magic UI: BorderBeam - orbiting gradient beam along a container border. */
 export function BorderBeam({
   className,
   size = 50,

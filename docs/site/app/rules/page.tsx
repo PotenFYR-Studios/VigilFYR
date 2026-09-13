@@ -64,7 +64,7 @@ enabled = true`}</code>
       </p>
 
       <h2>Cookbook</h2>
-      <p>Allow narrow before denying broad — first match wins:</p>
+      <p>Allow narrow before denying broad - first match wins:</p>
       <pre>
         <code>{`[[rule]]
 id = "allow-internal-templates"

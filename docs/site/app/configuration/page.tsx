@@ -20,7 +20,7 @@ export default function Configuration() {
     <DocShell title="Configuration Reference" active="/configuration">
       <p>
         Config lives at <code>~/.vigil/config.toml</code>. A missing file means
-        defaults — Vigil runs fine with no config.
+        defaults - Vigil runs fine with no config.
       </p>
       <pre>
         <code>{`[general]

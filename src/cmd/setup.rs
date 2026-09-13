@@ -83,7 +83,7 @@ pub fn setup(defaults: bool) -> Result<()> {
 
 fn prompt() -> Result<SetupChoices> {
     let mut choices = default_choices();
-    println!("Vigil setup — press Enter to accept defaults.");
+    println!("Vigil setup - press Enter to accept defaults.");
     print!("Enable masking? [y/N]: ");
     std::io::stdout().flush()?;
     let mut answer = String::new();

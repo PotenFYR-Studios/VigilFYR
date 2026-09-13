@@ -30,7 +30,7 @@ enum Commands {
     /// Evaluate an event from stdin and print a verdict (agent hooks call this)
     Intercept(intercept::InterceptArgs),
     /// Run a command under Vigil's filesystem monitoring wrapper
-    /// (monitoring only — hooks enforce)
+    /// (monitoring only - hooks enforce)
     Shim(shim::ShimArgs),
     /// Interactive setup
     Setup {

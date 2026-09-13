@@ -10,17 +10,17 @@ Vigil guards agents at the highest level each one supports, with two universal f
 | Cursor | 🪝 yes | ✅ | ✅ |
 | OpenCode | 🪝 yes | ✅ | ✅ |
 | Hermes | 🪝 yes | ✅ | ✅ |
-| any other agent / plain shell | — | ✅ | ✅ |
+| any other agent / plain shell | - | ✅ | ✅ |
 
 ## The three layers
 
-### Enforcement — hooks
+### Enforcement - hooks
 
-For hook-capable agents, Vigil registers hook handlers during `vigil setup`. Every tool call is evaluated **before** it executes: reads, writes, searches, command execution, network-touching commands. Verdicts come back as exit codes — `0` allow, `2` deny, `3` ask — with `warn` and `mask` verdicts allowing the call while recording it.
+For hook-capable agents, Vigil registers hook handlers during `vigil setup`. Every tool call is evaluated **before** it executes: reads, writes, searches, command execution, network-touching commands. Verdicts come back as exit codes - `0` allow, `2` deny, `3` ask - with `warn` and `mask` verdicts allowing the call while recording it.
 
 This is the only layer that *blocks*. It covers exactly the agents listed above with hook support; hooks cover hookable agents, and nothing else can block.
 
-### Audit — filesystem watch
+### Audit - filesystem watch
 
 The daemon watches sensitive areas and records access by any process, warning in the TUI. Audit mode never blocks: every `deny` verdict is demoted to `warn`. Use it to:
 
@@ -28,13 +28,13 @@ The daemon watches sensitive areas and records access by any process, warning in
 - cover agents without hook support,
 - catch processes no agent config could ever reach.
 
-### Shim — command wrapper
+### Shim - command wrapper
 
 ```sh
 vigil shim <command> [args…]
 ```
 
-Wraps an arbitrary command with the same rule evaluation. Point an unsupported agent's shell at it, or use it manually for one-off guarded runs. Same verdicts, same event log, same rules — just no ability to block mid-flight for tools it doesn't control.
+Wraps an arbitrary command with the same rule evaluation. Point an unsupported agent's shell at it, or use it manually for one-off guarded runs. Same verdicts, same event log, same rules - just no ability to block mid-flight for tools it doesn't control.
 
 ## Per-agent modes
 
@@ -56,8 +56,8 @@ vigil reload
 
 ## Proxy-proofing
 
-Vigil evaluates **local tool actions** — the files your agent's tools touch, the commands it runs. It does not inspect or care about LLM network traffic. Which API, proxy, gateway, or router serves the model (9router, LiteLLM, a corporate endpoint) has zero effect on verdicts. Same machine, same rules, same behavior regardless of what the model talks to.
+Vigil evaluates **local tool actions** - the files your agent's tools touch, the commands it runs. It does not inspect or care about LLM network traffic. Which API, proxy, gateway, or router serves the model (9router, LiteLLM, a corporate endpoint) has zero effect on verdicts. Same machine, same rules, same behavior regardless of what the model talks to.
 
 ## Honest limits
 
-See [Security model & limitations](security-model.md) for what each layer can and cannot catch — in particular, hooks cover hookable agents, and audit/shim provide visibility and wrapping, not interception.
+See [Security model & limitations](security-model.md) for what each layer can and cannot catch - in particular, hooks cover hookable agents, and audit/shim provide visibility and wrapping, not interception.

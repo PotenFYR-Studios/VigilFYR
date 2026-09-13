@@ -9,7 +9,7 @@ interface AuroraTextProps {
   className?: string;
 }
 
-/** Magic UI: AuroraText — gradient-animated inline text. */
+/** Magic UI: AuroraText - gradient-animated inline text. */
 export function AuroraText({ children, className }: AuroraTextProps) {
   return (
     <span

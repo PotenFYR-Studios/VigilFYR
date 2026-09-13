@@ -35,27 +35,27 @@ cargo install --path .`}</code>
       </p>
       <ol>
         <li>
-          <strong>OS check</strong> — verifies your platform is supported.
+          <strong>OS check</strong> - verifies your platform is supported.
         </li>
         <li>
-          <strong>Agent auto-detect</strong> — scans for Claude Code, Codex,
+          <strong>Agent auto-detect</strong> - scans for Claude Code, Codex,
           Gemini CLI, Cursor, OpenCode, and Hermes installs.
         </li>
         <li>
-          <strong>Per-agent mode</strong> — <code>enforce</code>,{" "}
+          <strong>Per-agent mode</strong> - <code>enforce</code>,{" "}
           <code>audit</code>, or <code>off</code> per detected agent; enforce is
           the default.
         </li>
         <li>
-          <strong>Extra paths</strong> — project-specific or personal paths
+          <strong>Extra paths</strong> - project-specific or personal paths
           beyond the built-in sensitive areas.
         </li>
         <li>
-          <strong>Masking opt-in</strong> — off by default; opt in here or later
+          <strong>Masking opt-in</strong> - off by default; opt in here or later
           via config.
         </li>
         <li>
-          <strong>Autostart + tray</strong> — daemon on login, tray icon with
+          <strong>Autostart + tray</strong> - daemon on login, tray icon with
           update checks.
         </li>
       </ol>
@@ -67,15 +67,15 @@ cargo install --path .`}</code>
       <h2>What runs where</h2>
       <ul>
         <li>
-          <code>vigil</code> / <code>vigil tui</code> — live report: verdicts,
+          <code>vigil</code> / <code>vigil tui</code> - live report: verdicts,
           agents, rules, event log, export.
         </li>
         <li>
-          <code>vigil daemon</code> — the background guard: audit watcher plus
+          <code>vigil daemon</code> - the background guard: audit watcher plus
           rule sync.
         </li>
         <li>
-          <code>vigil intercept</code> — the hook entry point agents call
+          <code>vigil intercept</code> - the hook entry point agents call
           before each tool action.
         </li>
       </ul>

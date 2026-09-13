@@ -26,12 +26,12 @@ Rust 1.75+ required (see `rust-toolchain.toml`).
 
 `vigil setup` is interactive and covers everything:
 
-1. **OS check** — verifies your platform is supported.
-2. **Agent auto-detect** — scans for Claude Code, Codex, Gemini CLI, Cursor, OpenCode, and Hermes installs.
-3. **Per-agent mode** — choose `enforce`, `audit`, or `off` for each detected agent. Default for detected agents is `enforce`.
-4. **Extra paths** — add project-specific or personal paths beyond the built-in sensitive areas.
-5. **Masking opt-in** — sensitive-data masking is off by default; opt in here (or later via config).
-6. **Autostart + tray** — start the daemon on login and show the tray icon (update checks live there too).
+1. **OS check** - verifies your platform is supported.
+2. **Agent auto-detect** - scans for Claude Code, Codex, Gemini CLI, Cursor, OpenCode, and Hermes installs.
+3. **Per-agent mode** - choose `enforce`, `audit`, or `off` for each detected agent. Default for detected agents is `enforce`.
+4. **Extra paths** - add project-specific or personal paths beyond the built-in sensitive areas.
+5. **Masking opt-in** - sensitive-data masking is off by default; opt in here (or later via config).
+6. **Autostart + tray** - start the daemon on login and show the tray icon (update checks live there too).
 
 Zero-prompt variant, all defaults:
 
@@ -41,9 +41,9 @@ vigil setup --defaults
 
 ## What runs where
 
-- `vigil` with no arguments (or `vigil tui`) — the live report: verdicts, agents, rules, event log, export.
-- `vigil daemon` — the background guard: audit watcher plus rule sync.
-- `vigil intercept` — the hook entry point agents call before each tool action.
+- `vigil` with no arguments (or `vigil tui`) - the live report: verdicts, agents, rules, event log, export.
+- `vigil daemon` - the background guard: audit watcher plus rule sync.
+- `vigil intercept` - the hook entry point agents call before each tool action.
 
 ## First rules check
 

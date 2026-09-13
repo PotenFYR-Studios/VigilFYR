@@ -11,7 +11,7 @@ interface NumberTickerProps {
   decimalPlaces?: number;
 }
 
-/** Magic UI: NumberTicker — counts up to the target when scrolled into view. */
+/** Magic UI: NumberTicker - counts up to the target when scrolled into view. */
 export function NumberTicker({
   value,
   className,

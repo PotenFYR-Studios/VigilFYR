@@ -38,7 +38,7 @@ export default function Agents() {
           ))}
           <tr className="border-t border-zinc-800">
             <td className="py-2">anything else</td>
-            <td className="py-2">—</td>
+            <td className="py-2">-</td>
             <td className="py-2">yes</td>
             <td className="py-2">yes</td>
           </tr>
@@ -48,19 +48,19 @@ export default function Agents() {
       <h2>The three layers</h2>
       <ul className="mt-4 space-y-3 text-sm">
         <li>
-          <strong className="text-zinc-100">Hooks</strong> — for hook-capable
+          <strong className="text-zinc-100">Hooks</strong> - for hook-capable
           agents, installed automatically by <code>vigil setup</code>. Every
           tool call (read, write, search, exec, net) is evaluated before it
           runs. Exit codes: <code>0</code> allow, <code>2</code> deny,{" "}
           <code>3</code> ask. The only layer that blocks.
         </li>
         <li>
-          <strong className="text-zinc-100">Audit</strong> — filesystem
+          <strong className="text-zinc-100">Audit</strong> - filesystem
           watcher; records sensitive-area access by any process and warns.
           Never blocks: every <code>deny</code> demotes to <code>warn</code>.
         </li>
         <li>
-          <strong className="text-zinc-100">Shim</strong> —{" "}
+          <strong className="text-zinc-100">Shim</strong> -{" "}
           <code>vigil shim &lt;command&gt;</code> wraps arbitrary commands with
           the same rule evaluation, for agents without hook support.
         </li>

@@ -9,7 +9,7 @@ use vigil::ext::load_extensions;
 use vigil::sync::{load_effective_rules, rules_dirs, sync_remote_rules};
 
 /// Summary of reloadable state: rules by source plus known agents.
-/// A free function on purpose — the daemon (later task) calls the same
+/// A free function on purpose - the daemon (later task) calls the same
 /// seam on SIGHUP/IPC reload.
 pub struct ReloadSummary {
     pub total_rules: usize,
@@ -49,7 +49,7 @@ pub fn print_reload_summary(s: &ReloadSummary) {
     }
 }
 
-/// `vigil rules list` — table of id, action, severity, scope, source.
+/// `vigil rules list` - table of id, action, severity, scope, source.
 pub fn rules_list(cfg: &Config) -> Result<()> {
     let ruleset = load_effective_rules(cfg);
     let extensions = load_extensions(vigil::ext::extensions_root());
@@ -83,7 +83,7 @@ pub fn rules_list(cfg: &Config) -> Result<()> {
     Ok(())
 }
 
-/// `vigil rules path` — print the rules directories in precedence order
+/// `vigil rules path` - print the rules directories in precedence order
 /// (builtin is compiled in, not shown as a path).
 pub fn rules_path() -> Result<()> {
     for (source, dir) in rules_dirs() {
@@ -93,14 +93,14 @@ pub fn rules_path() -> Result<()> {
     Ok(())
 }
 
-/// `vigil rules update` — manual remote sync; never fails on network.
+/// `vigil rules update` - manual remote sync; never fails on network.
 pub fn rules_update(cfg: &Config) -> Result<()> {
     let note = sync_remote_rules(cfg)?;
     println!("{note}");
     Ok(())
 }
 
-/// `vigil reload` — reload rules + agents, print summary.
+/// `vigil reload` - reload rules + agents, print summary.
 pub fn reload(cfg: &Config) -> Result<()> {
     let s = reload_state(cfg);
     print_reload_summary(&s);

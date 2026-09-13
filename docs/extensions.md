@@ -7,13 +7,13 @@ Extensions are drop-in folders that add rules, masking patterns, and event hooks
 ```
 ~/.vigil/extensions/
 └── my-team/
-    ├── manifest.toml      # required
-    ├── rules/
-    │   └── internal.toml  # rule files, same schema as the core ruleset
-    ├── patterns/
-    │   └── tokens.toml    # reusable masking pattern families
-    └── hooks/
-        └── audit.toml     # event hooks
+├── manifest.toml      # required
+├── rules/
+│   └── internal.toml  # rule files, same schema as the core ruleset
+├── patterns/
+│   └── tokens.toml    # reusable masking pattern families
+└── hooks/
+└── audit.toml     # event hooks
 ```
 
 Only `manifest.toml` is required; any of the three subdirectories is optional.

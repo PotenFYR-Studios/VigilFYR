@@ -279,14 +279,96 @@ body {
 }
 
 .md-body pre {
+  position: relative;
   overflow: auto;
   border: 1px solid var(--line-light);
   border-radius: 12px;
-  background: rgba(0,0,0,.45);
-  padding: 16px;
+  background: var(--panel);
+  padding: 26px 16px 14px;
 }
 
 .md-body pre code { background: transparent; color: var(--text-2); }
+
+.md-body pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 8px;
+  right: 48px;
+  color: var(--faint);
+  font-family: ui-monospace, monospace;
+  font-size: .62em;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid var(--line-light);
+  border-radius: 6px;
+  background: rgba(255,255,255,.05);
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s, color .15s, border-color .15s;
+}
+
+pre:hover .copy-btn,
+.copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  border-color: rgba(139,92,246,.5);
+  color: white;
+}
+
+.copy-btn.ok {
+  border-color: rgba(16,185,129,.4);
+  color: #34d399;
+}
+
+.table-scroll {
+  display: block;
+  overflow-x: auto;
+  margin: 1.1em 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: .9em;
+}
+
+.doc-table th {
+  padding: 10px 12px;
+  color: var(--muted);
+  font-size: .78em;
+  letter-spacing: .06em;
+  text-align: left;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.doc-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-light);
+  vertical-align: top;
+}
+
+.doc-table tr:last-child td {
+  border-bottom: 0;
+}
 .md-body a { color: #7dd3fc; }
 .md-body strong { color: var(--text); }
 

@@ -9,3 +9,6 @@ PLAN.md
 docs/site/.next/
 docs/site/out/
 docs/site/node_modules/
+
+docs/web/dist/
+docs/web/node_modules/

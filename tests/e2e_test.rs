@@ -85,17 +85,12 @@ fn extension_hook_deny_overrides_verdict() {
         "name = \"hook\"\nversion = \"0.1.0\"\n",
     )
     .unwrap();
-    let hook_script = if cfg!(windows) {
-        "$raw = [Console]::In.ReadToEnd(); Write-Output $raw.Trim() -NoNewline; exit 2\n"
-    } else {
-        "#!/bin/sh\nprintf '%s' '{\"action\":\"deny\",\"rule\":\"hook-deny\",\"reason\":\"hook override\"}'\nexit 2\n"
-    };
-    let hook_path = ext.join(if cfg!(windows) {
-        "hooks/on-event.ps1"
-    } else {
-        "hooks/on-event.sh"
-    });
-    std::fs::write(hook_path, hook_script).unwrap();
+    let hook_path = ext.join("hooks/on-event.sh");
+    std::fs::write(
+        hook_path,
+        "#!/bin/sh\nprintf '%s' '{\"action\":\"deny\",\"rule\":\"hook-deny\",\"reason\":\"hook override\"}'\nexit 2\n",
+    )
+    .unwrap();
 
     #[cfg(unix)]
     {

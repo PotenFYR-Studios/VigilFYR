@@ -3,6 +3,84 @@
 # Rule order = priority: first matching rule wins, keep most specific first.
 
 [[rule]]
+id = "deny-cloud-credentials"
+description = "Block cloud and CI credential files"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = [
+  "**/.config/gcloud/**",
+  "**/.azure/**",
+  "**/.kube/config",
+  "**/.docker/config.json",
+  "**/.terraform.d/**",
+  "**/.travis.yml",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-database-credentials"
+description = "Block database connection configs and dumps"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = ["**/.pgpass", "**/.my.cnf", "**/pg_dump*.sql", "**/*.dump", "**/*.bak"]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-browser-credential-stores"
+description = "Block browser cookies, login data, and keychains"
+scope = ["read", "search", "write", "delete", "rename"]
+paths = [
+  "**/Cookies",
+  "**/Login Data",
+  "**/Login Data For Account",
+  "**/login.keychain-db",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-system-identity-writes"
+description = "Block writes to system identity and scheduler files"
+scope = ["write", "delete", "rename"]
+paths = [
+  "/etc/hostname",
+  "/etc/hosts",
+  "/etc/crontab",
+  "/etc/cron.*/**",
+  "/etc/systemd/system/**",
+  "C:/Windows/System32/drivers/etc/hosts",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-git-config-credential-read"
+description = "Block reads of Git credential configuration"
+scope = ["read", "search"]
+paths = ["**/.git-credentials"]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-agent-config-writes"
+description = "Block writes to installed agent configurations"
+scope = ["write", "delete", "rename"]
+paths = [
+  "**/.claude/settings.json",
+  "**/.codex/config.toml",
+  "**/.gemini/settings.json",
+  "**/.cursor/hooks.json",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
 id = "deny-env-files"
 description = "Block reads, searches, and writes of env files"
 scope = ["read", "search", "write"]
@@ -81,6 +159,70 @@ scope = ["read"]
 paths = ["/etc/passwd", "/etc/shadow", "/etc/sudoers"]
 action = "deny"
 severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-exec-cloud-secret-exfil"
+description = "Block cloud credential collection and remote extraction"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(gcloud|aws|az|kubectl)\\b.*\\b(secret|credential|config|keyring|secret[s]?\\s+list)\\b",
+  "(?i)\\b(curl|wget|nc|ncat|ssh|scp)\\b.*(~|\\$HOME|/home/|/Users/)?/?(\\.ssh|\\.aws|\\.config/gcloud|\\.kube)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-reverse-shell"
+description = "Block common reverse-shell interpreters"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(bash|sh|zsh|python[23]?|perl|ruby|php|nc|ncat)\\b.*\\s(-e\\s*(/bin/(ba|z)?sh|cmd\\.exe|powershell)|/dev/(tcp|udp)/)",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-package-script-network"
+description = "Block package lifecycle scripts invoking remote payloads"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\b(npm|pnpm|yarn|bun|pip|pip3|gem|cargo)\\b.*\\b(curl|wget|iwr|invoke-webrequest|http[s]?://)\\b",
+]
+action = "deny"
+severity = "high"
+enabled = true
+
+[[rule]]
+id = "deny-exec-base64-shell"
+description = "Block base64 payloads piped into a shell"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)\\bbase64\\b.*\\|\\s*(ba|z|k)?sh\\b",
+  "(?i)\\becho\\b.*\\|\\s*(ba|z|k)?sh\\b",
+]
+action = "deny"
+severity = "critical"
+enabled = true
+
+[[rule]]
+id = "deny-exec-history-and-key wiping"
+description = "Block shell history and secure disk wiping commands"
+scope = ["exec"]
+paths = []
+commands = [
+  "(?i)(^|\\s|;)history\\s+-c",
+  "(?i)(^|\\s|;)unset\\s+HISTFILE",
+  "(?i)\\b(shred|wipe|srm|cipher)\\b.*/(dev/|home/|users/)",
+]
+action = "deny"
+severity = "critical"
 enabled = true
 
 [[rule]]

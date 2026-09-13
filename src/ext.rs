@@ -25,9 +25,7 @@ pub struct Extension {
 }
 
 pub fn extensions_root() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".vigil/extensions")
+    crate::agents::home().join(".vigil/extensions")
 }
 
 pub fn load_extensions(root: impl AsRef<Path>) -> Vec<Extension> {

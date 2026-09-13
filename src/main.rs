@@ -13,7 +13,11 @@ use cmd::update;
 use vigil::config::Config;
 
 #[derive(Parser)]
-#[command(name = "vigil", version, about = "VigilFYR: failover-ready CLI tool")]
+#[command(
+    name = "vigil",
+    version,
+    about = "VigilFYR: local-first guard for AI coding agents"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -61,6 +65,8 @@ enum Commands {
         #[arg(long)]
         once: bool,
     },
+    /// Run read-only setup and policy health checks
+    Doctor,
 }
 
 #[derive(Subcommand)]
@@ -87,6 +93,23 @@ enum RulesCommands {
     Path,
     /// Sync remote rules now
     Update,
+    /// Evaluate a synthetic event and print the verdict
+    Test {
+        /// Event action: read, write, search, exec, net, delete, rename, connect
+        action: String,
+        /// Paths to evaluate
+        #[arg(default_values_t = Vec::<String>::new())]
+        paths: Vec<String>,
+        /// Command line to evaluate
+        #[arg(long)]
+        command: Option<String>,
+        /// Simulated agent id
+        #[arg(long)]
+        agent: Option<String>,
+        /// Simulated tool name
+        #[arg(long)]
+        tool: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -126,6 +149,24 @@ fn main() -> anyhow::Result<()> {
                 RulesCommands::List => rules::rules_list(&cfg),
                 RulesCommands::Path => rules::rules_path(),
                 RulesCommands::Update => rules::rules_update(&cfg),
+                RulesCommands::Test {
+                    action,
+                    paths,
+                    command,
+                    agent,
+                    tool,
+                } => {
+                    let args = rules::RuleTestArgs {
+                        action: action
+                            .parse()
+                            .map_err(|error: String| anyhow::anyhow!(error))?,
+                        paths,
+                        command,
+                        agent,
+                        tool,
+                    };
+                    rules::rules_test(args)
+                }
             }
         }
         Commands::Config { command } => match command {
@@ -147,5 +188,6 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Update(args) => update::run(args),
         Commands::Tui { once } => vigil::tui::run_once(once),
+        Commands::Doctor => rules::doctor(),
     }
 }

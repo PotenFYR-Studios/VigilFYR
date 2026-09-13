@@ -32,7 +32,7 @@ pub struct ShimArgs {
     /// Print the JSON event records for observed events on stdout.
     #[arg(long, default_value_t = true)]
     events: bool,
-    /// The command to run under the shim, after `--`.
+    /// The command to run under the shim, after `--` (exec action).
     #[arg(last = true)]
     pub command: Vec<String>,
 }

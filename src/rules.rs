@@ -68,15 +68,30 @@ pub struct Rule {
 }
 
 impl Rule {
-    pub fn parse_toml(s: &str) -> anyhow::Result<Rule> {
+    pub fn parse_toml(s: &str) -> anyhow::Result<Vec<Rule>> {
         let value: toml::Value = toml::from_str(s)?;
         if let Some(rules) = value.get("rule").and_then(|v| v.as_array()) {
-            let last = rules
-                .last()
-                .ok_or_else(|| anyhow::anyhow!("empty rule list"))?;
-            return Ok(last.clone().try_into::<RuleToml>()?.into_rule());
+            let parsed = rules
+                .iter()
+                .map(|value| {
+                    value
+                        .clone()
+                        .try_into::<RuleToml>()
+                        .map(RuleToml::into_rule)
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            if parsed.is_empty() {
+                return Err(anyhow::anyhow!("empty rule list"));
+            }
+            return Ok(parsed);
         }
-        Ok(value.try_into::<RuleToml>()?.into_rule())
+        Ok(vec![value.try_into::<RuleToml>()?.into_rule()])
+    }
+
+    /// Parse every rule in a TOML file. Kept as a separate seam for
+    /// callers that want all rules, even when the file contains one.
+    pub fn parse_toml_all(s: &str) -> anyhow::Result<Vec<Rule>> {
+        Self::parse_toml(s)
     }
 }
 
@@ -140,7 +155,7 @@ pub fn load_rules(dirs: &[PathBuf]) -> anyhow::Result<Vec<Rule>> {
         entries.sort();
         for path in entries {
             let text = std::fs::read_to_string(&path)?;
-            rules.push(Rule::parse_toml(&text)?);
+            rules.extend(Rule::parse_toml(&text)?);
         }
     }
     Ok(merge_by_id(rules))
@@ -202,6 +217,8 @@ mod tests {
         let r = Rule::parse_toml(
             "id = \"x\"\nscope = [\"read\"]\npaths = [\"**/.env\"]\naction = \"deny\"",
         )
+        .unwrap()
+        .pop()
         .unwrap();
         assert_eq!(r.severity, Severity::Medium); // default
         assert!(r.enabled);
@@ -250,6 +267,9 @@ mod tests {
     }
 
     fn rule(id: &str, action: &str) -> Rule {
-        Rule::parse_toml(&rule_toml(id, action)).unwrap()
+        Rule::parse_toml(&rule_toml(id, action))
+            .unwrap()
+            .pop()
+            .unwrap()
     }
 }

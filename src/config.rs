@@ -162,6 +162,14 @@ fn default_masking_patterns() -> Vec<String> {
         "aws_key",
         "github_pat",
         "openai_key",
+        "google_api_key",
+        "anthropic_key",
+        "slack_token",
+        "private_token",
+        "stripe_key",
+        "sendgrid_key",
+        "twilio_key",
+        "connection_uri",
         "jwt",
         "private_key",
         "env_values",
@@ -283,10 +291,7 @@ fn parse_bool(key: &str, value: &str) -> Result<bool, ConfigError> {
 }
 
 fn config_path() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".vigil")
-        .join("config.toml")
+    crate::agents::home().join(".vigil").join("config.toml")
 }
 
 #[cfg(test)]

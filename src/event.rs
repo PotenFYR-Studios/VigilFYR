@@ -25,18 +25,42 @@ pub enum Action {
     Search,
     Exec,
     Net,
+    Delete,
+    Rename,
+    Connect,
 }
 
 impl std::fmt::Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Action::Read => "read",
-            Action::Write => "write",
-            Action::Search => "search",
-            Action::Exec => "exec",
-            Action::Net => "net",
+            Self::Read => "read",
+            Self::Write => "write",
+            Self::Search => "search",
+            Self::Exec => "exec",
+            Self::Net => "net",
+            Self::Delete => "delete",
+            Self::Rename => "rename",
+            Self::Connect => "connect",
         };
         f.write_str(s)
+    }
+}
+
+impl std::str::FromStr for Action {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "read" => Ok(Self::Read),
+            "write" => Ok(Self::Write),
+            "search" => Ok(Self::Search),
+            "exec" => Ok(Self::Exec),
+            "net" => Ok(Self::Net),
+            "delete" => Ok(Self::Delete),
+            "rename" => Ok(Self::Rename),
+            "connect" => Ok(Self::Connect),
+            _ => Err(format!("invalid action: {s}")),
+        }
     }
 }
 

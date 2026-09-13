@@ -26,3 +26,35 @@ regex = '(?s)-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY---
 [[pattern]]
 name = "env_values"
 regex = '(?im)^[A-Z_0-9]*(?i:secret|token|password|api_?key)[A-Z_0-9]*=.*$'
+
+[[pattern]]
+name = "google_api_key"
+regex = 'AIza[0-9A-Za-z_-]{35}'
+
+[[pattern]]
+name = "anthropic_key"
+regex = 'sk-ant-[A-Za-z0-9_-]{24,}'
+
+[[pattern]]
+name = "slack_token"
+regex = 'xox[abprs]-[A-Za-z0-9-]{10,}'
+
+[[pattern]]
+name = "private_token"
+regex = 'glpat-[A-Za-z0-9_-]{20,}'
+
+[[pattern]]
+name = "stripe_key"
+regex = 'sk_live_[A-Za-z0-9]{20,}'
+
+[[pattern]]
+name = "sendgrid_key"
+regex = 'SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}'
+
+[[pattern]]
+name = "twilio_key"
+regex = 'SK[0-9a-fA-F]{32}'
+
+[[pattern]]
+name = "connection_uri"
+regex = '(?i)\b(postgres(ql)?|mysql|mongodb(\+srv)?|redis|amqp)://[^\s/:]+:[^\s/@]+@[^\s]+'

@@ -53,6 +53,7 @@ Built by **PotenFYR Studios**.
 ### Rules
 - Built-in core ruleset: `.env` files, secrets dirs, `.ssh/`, `.aws/`, `.gnupg/`, key and credentials files, wallet directories, system paths - plus exec guards for `rm -rf /`, `sudo` system writes, and cloud metadata endpoints.
 - Rule schema with severities and priorities; first match wins, most specific first.
+- Built-in coverage now includes cloud/CI credentials, database configs and dumps, browser credential stores, system identity writes, agent config tampering, reverse shells, base64 shell pipelines, package-script exfiltration, and history/wipe attempts.
 - Remote rule sync from the community feed on boot and `vigil reload`; `vigil rules update` refreshes on demand.
 - Override any built-in rule by id from `~/.vigil/rules/` or `./.vigil/rules/`.
 
@@ -178,7 +179,7 @@ vigil config set masking.enabled true
 | `daemon.autostart` | `true` | Start the daemon on login |
 | `daemon.tray` | `true` | Show the tray icon (update checks live here too) |
 | `masking.enabled` | `false` | Opt-in sensitive-data masking |
-| `masking.patterns` | all six | `aws_key`, `github_pat`, `openai_key`, `jwt`, `private_key`, `env_values` |
+| `masking.patterns` | all built-in | fourteen provider/token/URI patterns plus JWT, private keys, and env values |
 | `rules.remote_update` | `true` | Sync community rules on boot / `vigil reload` |
 | `agents.<id>` | `claude-code=enforce` | Per-agent mode: `off`, `audit`, `enforce` |
 
@@ -212,6 +213,9 @@ vigil tui [--once]          live report; --once prints one snapshot
 vigil setup [--defaults]    interactive (or promptless) setup wizard
 vigil daemon [--no-tray]    run the background daemon
 vigil rules list|path       inspect the active ruleset
+vigil rules test <action> [path] [--command <cmd>] [--agent <id>]
+                            dry-run the effective policy without logging an event
+vigil doctor                read-only setup, agent, rule and masking health check
 vigil rules update          refresh the remote community feed
 vigil reload                reload rules + config without restart
 vigil config get|set        read/write config keys

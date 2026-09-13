@@ -137,8 +137,7 @@ pub fn run_once(once: bool) -> Result<()> {
         run_interactive()?;
         return Ok(());
     }
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
-    let log = crate::log::EventLog::new(home.join(".vigil/events.jsonl"));
+    let log = crate::log::EventLog::new(crate::agents::home().join(".vigil/events.jsonl"));
     let records = log.tail(50)?;
     print!("{}", snapshot(&records));
     Ok(())
@@ -258,8 +257,7 @@ pub fn run_interactive() -> Result<()> {
     if !io::stdout().is_terminal() {
         anyhow::bail!("interactive TUI requires a TTY; use --once in scripts");
     }
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
-    let log = crate::log::EventLog::new(home.join(".vigil/events.jsonl"));
+    let log = crate::log::EventLog::new(crate::agents::home().join(".vigil/events.jsonl"));
     let mut state = TuiState::new(log.tail(1000)?, Vec::new(), Vec::new());
     crossterm::terminal::enable_raw_mode()?;
     let mut stdout = io::stdout();

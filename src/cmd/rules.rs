@@ -1,6 +1,7 @@
 //! `vigil rules` subcommands and `vigil reload`.
 
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 
 use anyhow::Result;
 
@@ -32,13 +33,16 @@ pub fn reload_state(cfg: &Config) -> ReloadSummary {
     }
 }
 
-pub fn print_reload_summary(s: &ReloadSummary) {
-    let by_source = s
-        .rules_by_source
+fn source_summary(s: &ReloadSummary) -> String {
+    s.rules_by_source
         .iter()
         .map(|(k, v)| format!("{k}: {v}"))
         .collect::<Vec<_>>()
-        .join(", ");
+        .join(", ")
+}
+
+pub fn print_reload_summary(s: &ReloadSummary) {
+    let by_source = source_summary(s);
     println!(
         "{} rules ({by_source}), {} agents",
         s.total_rules,
@@ -100,9 +104,97 @@ pub fn rules_update(cfg: &Config) -> Result<()> {
     Ok(())
 }
 
+/// `vigil rules test` - evaluate a synthetic event without touching a
+/// protected agent or writing the event log.
+pub fn rules_test(args: RuleTestArgs) -> Result<()> {
+    let cfg = Config::load();
+    let ruleset = load_effective_rules(&cfg);
+    let event = vigil::event::Event {
+        schema: 1,
+        agent: args.agent.unwrap_or_else(|| "test".to_string()),
+        tool: args.tool.unwrap_or_else(|| "manual".to_string()),
+        action: args.action,
+        paths: args.paths.into_iter().map(PathBuf::from).collect(),
+        command: args.command,
+        cwd: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+        session: "rules-test".to_string(),
+    };
+    let verdict = ruleset.evaluate(&event, cfg.general.mode);
+    println!("{}\t{}\t{}", verdict.action, verdict.rule, verdict.reason);
+    Ok(())
+}
+
 /// `vigil reload` - reload rules + agents, print summary.
 pub fn reload(cfg: &Config) -> Result<()> {
     let s = reload_state(cfg);
     print_reload_summary(&s);
     Ok(())
+}
+
+/// `vigil doctor` - one-shot health report for CI, setup debugging and
+/// support workflows. Every check is read-only.
+pub fn doctor() -> Result<()> {
+    let cfg = Config::load();
+    let summary = reload_state(&cfg);
+    let detected = vigil::agents::detect_agents();
+    let extensions = load_extensions(vigil::ext::extensions_root());
+    let masking = if cfg.masking.enabled { "on" } else { "off" };
+    let mode = if cfg.general.enabled {
+        cfg.general.mode.to_string()
+    } else {
+        "disabled".to_string()
+    };
+
+    println!("mode: {mode}");
+    println!(
+        "rules: {} ({})",
+        summary.total_rules,
+        source_summary(&summary)
+    );
+    println!("masking: {masking}");
+    println!("agents detected: {}", detected.len());
+    for agent in &detected {
+        println!(
+            "  {}: {} ({})",
+            agent.id,
+            agent.display,
+            cfg.agents
+                .get(agent.id)
+                .map(|mode| mode.to_string())
+                .unwrap_or_else(|| "unconfigured".to_string())
+        );
+    }
+    println!("extensions: {}", extensions.len());
+
+    let mut failures = Vec::new();
+    if !cfg.general.enabled {
+        failures.push("Vigil is disabled");
+    }
+    if summary.total_rules == 0 {
+        failures.push("no rules loaded");
+    }
+    if extensions
+        .iter()
+        .any(|extension| !extension.root.join("manifest.toml").is_file())
+    {
+        failures.push("extension missing manifest");
+    }
+    if failures.is_empty() {
+        println!("status: ok");
+    } else {
+        println!("status: attention");
+        for failure in failures {
+            println!("  {failure}");
+        }
+    }
+    Ok(())
+}
+
+#[derive(Debug, Clone)]
+pub struct RuleTestArgs {
+    pub action: vigil::event::Action,
+    pub paths: Vec<String>,
+    pub command: Option<String>,
+    pub agent: Option<String>,
+    pub tool: Option<String>,
 }

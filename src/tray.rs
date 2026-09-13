@@ -5,9 +5,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 
 pub fn autostart_path() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".config/autostart/vigil-daemon.desktop")
+    crate::agents::home().join(".config/autostart/vigil-daemon.desktop")
 }
 
 pub fn set_autostart(enabled: bool) -> Result<()> {

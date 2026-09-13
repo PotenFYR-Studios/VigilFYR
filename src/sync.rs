@@ -45,7 +45,7 @@ pub const REMOTE_RULES_URL: &str =
 /// Rules directories in override order (later overrides earlier by id):
 /// builtin → remote → user (~/.vigil/rules) → project (./.vigil/rules).
 pub fn rules_dirs() -> Vec<(String, PathBuf)> {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    let home = crate::agents::home();
     vec![
         (
             "remote".to_string(),
@@ -286,6 +286,8 @@ mod tests {
     fn parse_toml_stamps_no_source() {
         let r =
             Rule::parse_toml("id = \"x\"\nscope = [\"read\"]\npaths = [\"p\"]\naction = \"deny\"")
+                .unwrap()
+                .pop()
                 .unwrap();
         assert_eq!(r.source, "");
         let _ = Action::Read;

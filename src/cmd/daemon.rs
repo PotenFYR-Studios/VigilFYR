@@ -11,7 +11,7 @@ pub struct DaemonArgs {
 }
 
 pub async fn daemon(no_tray: bool) -> Result<()> {
-    let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+    let home = vigil::agents::home();
     let cfg = vigil::config::Config::load();
     let note = sync_remote_rules(&cfg)?;
     println!("vigil daemon: {note}");

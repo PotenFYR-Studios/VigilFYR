@@ -136,7 +136,9 @@ pub async fn run(args: InterceptArgs, mut stdin: impl Unpin + tokio::io::AsyncRe
                 let extensions = load_extensions(vigil::ext::extensions_root());
                 if !extensions.is_empty() {
                     let record = IpcRecord::from_verdict(&event, &v);
-                    if let Some(override_json) = apply_event_hooks(&extensions, &record.to_line()?)?
+                    let record_json = record.to_line()?;
+                    if let Some(override_json) =
+                        apply_event_hooks(&extensions, record_json.trim_end())?
                     {
                         #[derive(serde::Deserialize)]
                         struct HookOverride {

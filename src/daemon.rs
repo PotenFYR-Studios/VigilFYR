@@ -1,4 +1,4 @@
-//! In-process daemon core and Unix-socket event fanout.
+//! In-process daemon core and local IPC event fanout.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -12,6 +12,9 @@ use crate::ipc::IpcRecord;
 use crate::log::EventLog;
 
 pub const SOCKET_PATH: &str = "/tmp/vigil.sock";
+
+#[cfg(windows)]
+pub const PIPE_PATH: &str = r"\\.\pipe\vigil-events";
 
 #[derive(Debug)]
 pub struct DaemonCore {
@@ -43,10 +46,26 @@ impl DaemonCore {
     }
 
     pub async fn accept_events(&self) -> Result<()> {
+        #[cfg(unix)]
         let _ = tokio::fs::remove_file(SOCKET_PATH).await;
+        #[cfg(unix)]
         let listener = tokio::net::UnixListener::bind(SOCKET_PATH)?;
+        #[cfg(windows)]
+        let listener = tokio::net::windows::named_pipe::ServerOptions::new()
+            .first_pipe_instance(true)
+            .create(PIPE_PATH)?;
+
         loop {
+            #[cfg(unix)]
             let (mut stream, _) = listener.accept().await?;
+            #[cfg(windows)]
+            let mut stream = {
+                let next_server = tokio::net::windows::named_pipe::ServerOptions::new()
+                    .access_inbound(true)
+                    .create(PIPE_PATH)?;
+                stream.connect().await?;
+                next_server
+            };
             let sender = self.sender.clone();
             tokio::spawn(async move {
                 let mut buffer = Vec::new();

@@ -28,6 +28,19 @@ jobs:
         working-directory: docs/site
       - run: npm run build
         working-directory: docs/site
+      - name: Configure custom domain
+        run: echo "vigilfyr.docs.potenfyr.in" > docs/site/out/CNAME
+      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/site/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://vigilfyr.docs.potenfyr.in
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -184,7 +184,17 @@ pub async fn run(args: InterceptArgs, mut stdin: impl Unpin + tokio::io::AsyncRe
 }
 
 async fn publish(record: &IpcRecord) {
+    #[cfg(unix)]
     if let Ok(mut stream) = tokio::net::UnixStream::connect("/tmp/vigil.sock").await {
+        use tokio::io::AsyncWriteExt;
+        let _ = stream
+            .write_all(record.to_line().unwrap_or_default().as_bytes())
+            .await;
+    }
+    #[cfg(windows)]
+    if let Ok(mut stream) =
+        tokio::net::windows::named_pipe::ClientOptions::new().open(vigil::daemon::PIPE_PATH)
+    {
         use tokio::io::AsyncWriteExt;
         let _ = stream
             .write_all(record.to_line().unwrap_or_default().as_bytes())

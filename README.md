@@ -302,8 +302,9 @@ Authoring guide: [Extensions](docs/extensions.md).
 Full documentation lives in [docs/](docs/) and is published to the
 [VigilFYR docs site](https://potenfyr-studios.github.io/VigilFYR/) with
 installation, rules, masking, agents matrix, daemon, extensions and
-security-model guides. Built with Next.js (`docs/site/`), statically
-exported and auto-deployed on every push to `master`.
+security-model guides. Built with Vite, React, TypeScript, Bun and Magic UI
+components (`docs/web/`), statically generated and auto-deployed on every
+push to `master`.
 
 ---
 

@@ -5,3 +5,7 @@ CLAUDE.md
 .plan
 PLAN.md
 /target
+
+docs/site/.next/
+docs/site/out/
+docs/site/node_modules/

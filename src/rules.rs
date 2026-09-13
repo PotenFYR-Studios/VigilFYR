@@ -69,7 +69,14 @@ pub struct Rule {
 
 impl Rule {
     pub fn parse_toml(s: &str) -> anyhow::Result<Rule> {
-        Ok(toml::from_str::<RuleToml>(s)?.into_rule())
+        let value: toml::Value = toml::from_str(s)?;
+        if let Some(rules) = value.get("rule").and_then(|v| v.as_array()) {
+            let last = rules
+                .last()
+                .ok_or_else(|| anyhow::anyhow!("empty rule list"))?;
+            return Ok(last.clone().try_into::<RuleToml>()?.into_rule());
+        }
+        Ok(value.try_into::<RuleToml>()?.into_rule())
     }
 }
 

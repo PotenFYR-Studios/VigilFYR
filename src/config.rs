@@ -90,6 +90,8 @@ impl Default for Config {
 pub struct General {
     pub enabled: bool,
     pub mode: Mode,
+    #[serde(default = "default_true")]
+    pub check_updates: bool,
 }
 
 impl Default for General {
@@ -97,6 +99,7 @@ impl Default for General {
         General {
             enabled: true,
             mode: Mode::Enforce,
+            check_updates: true,
         }
     }
 }
@@ -105,6 +108,7 @@ impl Default for General {
 pub struct Daemon {
     pub autostart: bool,
     pub tray: bool,
+    pub autostart_enabled: bool,
 }
 
 impl Default for Daemon {
@@ -112,6 +116,7 @@ impl Default for Daemon {
         Daemon {
             autostart: true,
             tray: true,
+            autostart_enabled: true,
         }
     }
 }
@@ -146,6 +151,10 @@ impl Default for Rules {
 
 fn default_agents() -> HashMap<String, AgentMode> {
     HashMap::from([("claude-code".to_string(), AgentMode::Enforce)])
+}
+
+fn default_true() -> bool {
+    true
 }
 
 fn default_masking_patterns() -> Vec<String> {
@@ -217,8 +226,12 @@ impl Config {
                     value: value.to_string(),
                 })?;
             }
+            "general.check_updates" => self.general.check_updates = parse_bool(dotted_key, value)?,
             "daemon.autostart" => self.daemon.autostart = parse_bool(dotted_key, value)?,
             "daemon.tray" => self.daemon.tray = parse_bool(dotted_key, value)?,
+            "daemon.autostart_enabled" => {
+                self.daemon.autostart_enabled = parse_bool(dotted_key, value)?
+            }
             "masking.enabled" => self.masking.enabled = parse_bool(dotted_key, value)?,
             "rules.remote_update" => self.rules.remote_update = parse_bool(dotted_key, value)?,
             other if other.starts_with("agents.") => {
@@ -242,8 +255,10 @@ impl Config {
         match dotted_key {
             "general.enabled" => Ok(self.general.enabled.to_string()),
             "general.mode" => Ok(self.general.mode.to_string()),
+            "general.check_updates" => Ok(self.general.check_updates.to_string()),
             "daemon.autostart" => Ok(self.daemon.autostart.to_string()),
             "daemon.tray" => Ok(self.daemon.tray.to_string()),
+            "daemon.autostart_enabled" => Ok(self.daemon.autostart_enabled.to_string()),
             "masking.enabled" => Ok(self.masking.enabled.to_string()),
             "rules.remote_update" => Ok(self.rules.remote_update.to_string()),
             other if other.starts_with("agents.") => {

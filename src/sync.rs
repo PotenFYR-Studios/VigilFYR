@@ -58,8 +58,15 @@ pub fn rules_dirs() -> Vec<(String, PathBuf)> {
 
 /// Assemble the effective ruleset: builtin → remote → user → project,
 /// later ids override earlier. Mode is applied per-evaluate, not here.
-pub fn load_effective_rules(_cfg: &Config) -> Ruleset {
-    let dirs = rules_dirs();
+pub fn load_effective_rules(cfg: &Config) -> Ruleset {
+    let mut dirs = rules_dirs();
+    let _ = &cfg;
+    let extension_rules =
+        crate::ext::extension_rules(&crate::ext::load_extensions(crate::ext::extensions_root()));
+    for (source, dir) in extension_rules {
+        dirs.push((source, dir.parent().unwrap_or(&dir).to_path_buf()));
+    }
+    let _ = cfg;
     let rules = load_rules_with_builtin(&dirs);
     Ruleset::compile(rules)
 }

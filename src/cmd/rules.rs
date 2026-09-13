@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use anyhow::Result;
 
 use vigil::config::{AgentMode, Config};
+use vigil::ext::load_extensions;
 use vigil::sync::{load_effective_rules, rules_dirs, sync_remote_rules};
 
 /// Summary of reloadable state: rules by source plus known agents.
@@ -51,6 +52,18 @@ pub fn print_reload_summary(s: &ReloadSummary) {
 /// `vigil rules list` — table of id, action, severity, scope, source.
 pub fn rules_list(cfg: &Config) -> Result<()> {
     let ruleset = load_effective_rules(cfg);
+    let extensions = load_extensions(vigil::ext::extensions_root());
+    if !extensions.is_empty() {
+        println!("EXTENSIONS");
+        for extension in &extensions {
+            println!(
+                "{}\t{}\t{}",
+                extension.manifest.name,
+                extension.manifest.version,
+                extension.root.display()
+            );
+        }
+    }
     println!(
         "{:<38} {:<7} {:<10} {:<20} SOURCE",
         "ID", "ACTION", "SEVERITY", "SCOPE"

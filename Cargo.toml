@@ -25,4 +25,10 @@ toml = "0.9.7"
 ureq = "2"
 flate2 = "1"
 tar = "0.4"
+walkdir = "2"
+futures = "0.3"
 notify = "6"
+tokio = { version = "1", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+ratatui = "0.29"
+crossterm = "0.28"

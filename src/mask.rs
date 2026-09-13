@@ -22,15 +22,15 @@ impl MaskPattern {
 
 /// Pattern file shape (`rules/patterns.toml`, and user extension dirs).
 #[derive(Debug, Deserialize)]
-struct PatternsFile {
+pub struct PatternsFile {
     #[serde(default)]
-    pattern: Vec<PatternToml>,
+    pub pattern: Vec<PatternToml>,
 }
 
 #[derive(Debug, Deserialize)]
-struct PatternToml {
-    name: String,
-    regex: String,
+pub struct PatternToml {
+    pub name: String,
+    pub regex: String,
 }
 
 /// Built-in named patterns embedded from `rules/patterns.toml`.

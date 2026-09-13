@@ -18,6 +18,7 @@ use notify::{RecursiveMode, Watcher};
 use vigil::config::Config;
 use vigil::engine::Mode;
 use vigil::event::{Action, VerdictAction};
+use vigil::mask::select_patterns;
 use vigil::sync::load_effective_rules;
 
 #[derive(Parser)]
@@ -43,6 +44,7 @@ fn event_record(
     cwd: &std::path::Path,
     rule: &str,
     verdict: VerdictAction,
+    masked_paths: &[PathBuf],
 ) -> serde_json::Value {
     serde_json::json!({
         "schema": 1,
@@ -54,6 +56,7 @@ fn event_record(
         "cwd": cwd,
         "verdict": verdict.to_string(),
         "rule": rule,
+        "masked_paths": masked_paths,
     })
 }
 
@@ -67,6 +70,13 @@ pub fn shim(args: ShimArgs, cmd: &[String]) -> Result<()> {
     let cfg = Config::load();
     let mode = cfg.general.mode;
     let ruleset = load_effective_rules(&cfg);
+    let patterns = if cfg.masking.enabled {
+        select_patterns(&cfg.masking.patterns)
+    } else {
+        Vec::new()
+    };
+    let mut events_out: Vec<String> = Vec::new();
+    record_command_reads(cmd, &ruleset, mode, &args.cwd, &patterns, &mut events_out);
 
     // Watch roots: explicit --watch dirs, else the cwd.
     let roots = if args.watch.is_empty() {
@@ -90,18 +100,23 @@ pub fn shim(args: ShimArgs, cmd: &[String]) -> Result<()> {
         .spawn()
         .map_err(|e| anyhow::anyhow!("spawning {}: {e}", cmd[0]))?;
 
-    // Poll watcher events while the child runs.
-    let mut events_out: Vec<String> = Vec::new();
     loop {
         match child.try_wait()? {
             Some(status) => {
-                // Drain any events that raced with the exit.
                 while let Ok(res) = rx.try_recv() {
                     if let Ok(ev) = res {
-                        record_event(ev, &ruleset, mode, &args.cwd, args.events, &mut events_out);
+                        record_event(
+                            ev,
+                            &ruleset,
+                            mode,
+                            &args.cwd,
+                            args.events,
+                            &patterns,
+                            &mut events_out,
+                        );
                     }
                 }
-                for line in &events_out {
+                for line in events_out {
                     println!("{line}");
                 }
                 let code = status.code().unwrap_or(1);
@@ -110,10 +125,76 @@ pub fn shim(args: ShimArgs, cmd: &[String]) -> Result<()> {
             None => {
                 while let Ok(res) = rx.try_recv() {
                     if let Ok(ev) = res {
-                        record_event(ev, &ruleset, mode, &args.cwd, args.events, &mut events_out);
+                        record_event(
+                            ev,
+                            &ruleset,
+                            mode,
+                            &args.cwd,
+                            args.events,
+                            &patterns,
+                            &mut events_out,
+                        );
                     }
                 }
                 std::thread::sleep(Duration::from_millis(20));
+            }
+        }
+    }
+}
+
+/// inotify does not expose ordinary file reads on Linux. Shell command
+/// arguments are the best portable source for shim-level read masking:
+/// matching existing files become mask records for the outer proxy to act on.
+fn record_command_reads(
+    cmd: &[String],
+    ruleset: &vigil::rules::Ruleset,
+    mode: Mode,
+    cwd: &std::path::Path,
+    patterns: &[vigil::mask::MaskPattern],
+    out: &mut Vec<String>,
+) {
+    if patterns.is_empty() {
+        return;
+    }
+    for argument in cmd {
+        for token in argument.split([' ', '\t', '\n', '|', '>', '<', ';', '&', '"', '\'']) {
+            if token.is_empty() || token == "/dev/null" {
+                continue;
+            }
+            let path = PathBuf::from(token);
+            let path = if path.is_absolute() {
+                path
+            } else {
+                cwd.join(path)
+            };
+            if !path.is_file() {
+                continue;
+            }
+            let event = vigil::event::Event {
+                schema: 1,
+                agent: "shim".to_string(),
+                tool: "shim".to_string(),
+                action: Action::Read,
+                paths: vec![path.clone()],
+                command: None,
+                cwd: cwd.to_path_buf(),
+                session: "shim".to_string(),
+            };
+            let verdict = ruleset.evaluate(&event, mode);
+            if verdict.action != VerdictAction::Mask {
+                continue;
+            }
+            let record = event_record(
+                Action::Read,
+                &[path],
+                cwd,
+                &verdict.rule,
+                VerdictAction::Mask,
+                &verdict.masked_paths,
+            );
+            let record = record.to_string();
+            if !out.contains(&record) {
+                out.push(record);
             }
         }
     }
@@ -126,6 +207,7 @@ fn record_event(
     mode: Mode,
     cwd: &std::path::Path,
     emit: bool,
+    _patterns: &[vigil::mask::MaskPattern],
     out: &mut Vec<String>,
 ) {
     let action = match ev.kind {
@@ -151,7 +233,14 @@ fn record_event(
         session: "shim".to_string(),
     };
     let verdict = ruleset.evaluate(&event, mode);
-    let record = event_record(action, &paths, cwd, &verdict.rule, verdict.action);
+    let record = event_record(
+        action,
+        &paths,
+        cwd,
+        &verdict.rule,
+        verdict.action,
+        &verdict.masked_paths,
+    );
     if emit {
         out.push(record.to_string());
     }

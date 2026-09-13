@@ -197,14 +197,9 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
                 .spawn()
                 .with_context(|| format!("run extension hook {}", script.display()))?;
             if let Some(stdin) = child.stdin.as_mut() {
-                let record_length = record_json.len();
-                let mut written = 0;
-                while written < record_length {
-                    match stdin.write(&record_json.as_bytes()[written..]) {
-                        Ok(0) => break,
-                        Ok(count) => written += count,
-                        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => break,
-                        Err(error) => return Err(error.into()),
+                if let Err(error) = stdin.write_all(record_json.as_bytes()) {
+                    if error.kind() != std::io::ErrorKind::BrokenPipe {
+                        return Err(error.into());
                     }
                 }
             }

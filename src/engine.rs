@@ -4,8 +4,10 @@ use crate::event::{Event, Verdict, VerdictAction};
 use crate::rules::Ruleset;
 
 /// Enforcement mode. Audit records but never blocks.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Mode {
+    #[default]
     Enforce,
     Audit,
 }

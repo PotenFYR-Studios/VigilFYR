@@ -75,6 +75,16 @@ Rule ids from extensions participate in the same override chain: an extension ru
 
 ## Sharing extensions
 
+Share a Git repository containing the same folder layout. Install it with:
+
+```sh
+vigil extension install https://github.com/your-org/vigil-extension
+vigil extension list
+vigil extension remove your-org-vigil-extension
+```
+
+Extensions run hook scripts with your user privileges. Install only extensions
+you trust; hooks have a 500 ms timeout and fail open.
 An extension folder is self-contained — commit it to a repo, and teammates install it by copying into `~/.vigil/extensions/`. Version bumps in `manifest.toml` make updates visible in `vigil rules list` output and event reasons.
 
 Keep extension rules narrow (specific paths, scoped `agents`) and ordered most-specific-first, same as the core ruleset.

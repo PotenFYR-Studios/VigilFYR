@@ -42,6 +42,12 @@ export const pages: DocPage[] = [
       "Full config.toml schema, vigil config get/set, file locations, remote rule sync.",
   },
   {
+    href: "/daemon",
+    title: "Daemon & Live Report",
+    blurb:
+      "Run the local event bus, inspect persisted events, export reports, and check updates safely.",
+  },
+  {
     href: "/security-model",
     title: "Security Model & Limitations",
     blurb:

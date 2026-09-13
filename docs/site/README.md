@@ -14,6 +14,7 @@ Pages mirror the markdown docs in `docs/`:
 | `/agents` | docs/agents.md |
 | `/extensions` | docs/extensions.md |
 | `/configuration` | docs/configuration.md |
+| `/daemon` | docs/daemon.md |
 | `/security-model` | docs/security-model.md |
 
 ## Develop

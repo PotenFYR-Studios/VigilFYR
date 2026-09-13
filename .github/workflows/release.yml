@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            platform: linux
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            platform: linux
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            platform: macos
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            platform: macos
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            platform: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: taiki-e/install-action@cargo-zigbuild
+        if: runner.os == 'Linux'
+      - run: cargo zigbuild --release --target ${{ matrix.target }}
+        if: runner.os == 'Linux'
+      - run: cargo build --release --target ${{ matrix.target }}
+        if: runner.os != 'Linux'
+      - run: |
+          mkdir -p dist/vigil
+          cp target/${{ matrix.target }}/release/vigil* dist/vigil/ || true
+          tar -czf vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz -C dist vigil
+          shasum -a 256 vigil-*.tar.gz > vigil-*.tar.gz.sha256
+        shell: bash
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            vigil-*.tar.gz
+            vigil-*.tar.gz.sha256

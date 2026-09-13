@@ -11,6 +11,7 @@ The AI-agent guard: blocks Claude Code, Codex, Gemini CLI, Cursor, OpenCode, and
 | [Masking](masking.md) | Opt-in sensitive-data redaction with 4-char prefix preserved |
 | [Agents Matrix](agents.md) | Hook / audit / shim coverage per agent, per-agent modes, proxy-proofing |
 | [Extensions](extensions.md) | `manifest.toml` layout and authoring guide |
+| [Daemon, IPC & Live Report](daemon.md) | `vigil daemon`, Unix-socket bus, `vigil tui`, update checks |
 | [Configuration Reference](configuration.md) | Full `config.toml` schema, `vigil config get/set`, file locations |
 | [Security Model & Limitations](security-model.md) | Threat model, fail-open rationale, honest limits |
 

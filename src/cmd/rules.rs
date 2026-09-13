@@ -177,19 +177,25 @@ pub fn doctor() -> Result<()> {
 
     let mut failures = Vec::new();
     if !cfg.general.enabled {
-        failures.push("Vigil is disabled");
+        failures.push("Vigil is disabled".to_string());
     }
     if summary.total_rules == 0 {
-        failures.push("no rules loaded");
+        failures.push("no rules loaded".to_string());
     }
     if !cfg.rules.remote_update {
-        failures.push("remote rule updates disabled");
+        failures.push("remote rule updates disabled".to_string());
     }
     if extensions
         .iter()
         .any(|extension| !extension.root.join("manifest.toml").is_file())
     {
-        failures.push("extension missing manifest");
+        failures.push("extension missing manifest".to_string());
+    }
+    if let Some(room) = (cfg.rules.max_events > 0)
+        .then(|| cfg.rules.max_events.saturating_sub(records.len()))
+        .filter(|room| *room <= 100)
+    {
+        failures.push(format!("event capacity nearly full ({room} remaining)"));
     }
     if failures.is_empty() {
         println!("status: ok");

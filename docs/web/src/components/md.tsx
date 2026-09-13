@@ -90,7 +90,7 @@ export function Markdown({ content }: { content: string }) {
       const code: string[] = [];
       index++;
       while (index < lines.length && !lines[index].startsWith("```")) {
-        code.push(lines[index].replace(/^ {3}/, ""));
+        code.push(lines[index]);
         index++;
       }
       index++;

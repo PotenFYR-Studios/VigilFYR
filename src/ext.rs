@@ -174,13 +174,16 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
             let mut child = Command::new(&script)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
+                .stderr(Stdio::null())
                 .spawn()
                 .with_context(|| format!("run extension hook {}", script.display()))?;
-            child
-                .stdin
-                .as_mut()
-                .expect("hook stdin piped")
-                .write_all(record_json.as_bytes())?;
+            if let Some(mut stdin) = child.stdin.take() {
+                if stdin.write_all(record_json.as_bytes()).is_err() {
+                    let _ = stdin.flush();
+                }
+                let _ = stdin.flush();
+                drop(stdin);
+            }
             let output = wait_timeout(&mut child, Duration::from_millis(500))?;
             if output.status.code() == Some(2)
                 && !String::from_utf8_lossy(&output.stdout).trim().is_empty()

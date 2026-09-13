@@ -12,3 +12,6 @@ docs/site/node_modules/
 
 docs/web/dist/
 docs/web/node_modules/
+
+# Serena MCP local state
+.serena/

@@ -86,7 +86,7 @@ fn extension_hook_deny_overrides_verdict() {
     )
     .unwrap();
     let hook_script = if cfg!(windows) {
-        "Write-Output '{\"action\":\"deny\",\"rule\":\"hook-deny\",\"reason\":\"hook override\"}' -NoNewline\nexit 2\n"
+        "$raw = [Console]::In.ReadToEnd(); Write-Output $raw.Trim() -NoNewline; exit 2\n"
     } else {
         "#!/bin/sh\nprintf '%s' '{\"action\":\"deny\",\"rule\":\"hook-deny\",\"reason\":\"hook override\"}'\nexit 2\n"
     };

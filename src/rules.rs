@@ -62,6 +62,9 @@ pub struct Rule {
     pub action: VerdictAction,
     pub severity: Severity,
     pub enabled: bool,
+    /// Which rules source this rule came from ("builtin", "remote",
+    /// "user", "project"); empty until stamped by the loader.
+    pub source: String,
 }
 
 impl Rule {
@@ -82,6 +85,7 @@ impl RuleToml {
             action: self.action,
             severity: self.severity,
             enabled: self.enabled,
+            source: String::new(),
         }
     }
 }

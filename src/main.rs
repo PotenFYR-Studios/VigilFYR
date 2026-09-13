@@ -1,5 +1,10 @@
 use clap::{Parser, Subcommand};
 
+mod cmd;
+
+use cmd::rules;
+use vigil::config::Config;
+
 #[derive(Parser)]
 #[command(name = "vigil", version, about = "VigilFYR: failover-ready CLI tool")]
 struct Cli {
@@ -16,7 +21,8 @@ enum Commands {
     /// Interactive setup
     Setup,
     /// Manage rules
-    Rules,
+    #[command(subcommand)]
+    Rules(RulesCommands),
     /// Manage configuration
     Config,
     /// Manage agents
@@ -29,6 +35,16 @@ enum Commands {
     Tui,
 }
 
+#[derive(Subcommand)]
+enum RulesCommands {
+    /// List effective rules (builtin → remote → user → project)
+    List,
+    /// Print rules directories
+    Path,
+    /// Sync remote rules now
+    Update,
+}
+
 fn not_yet_implemented() -> anyhow::Result<()> {
     anyhow::bail!("not yet implemented")
 }
@@ -39,10 +55,20 @@ fn main() -> anyhow::Result<()> {
         Commands::Daemon => not_yet_implemented(),
         Commands::Intercept => not_yet_implemented(),
         Commands::Setup => not_yet_implemented(),
-        Commands::Rules => not_yet_implemented(),
+        Commands::Rules(cmd) => {
+            let cfg = Config::load();
+            match cmd {
+                RulesCommands::List => rules::rules_list(&cfg),
+                RulesCommands::Path => rules::rules_path(),
+                RulesCommands::Update => rules::rules_update(&cfg),
+            }
+        }
         Commands::Config => not_yet_implemented(),
         Commands::Agents => not_yet_implemented(),
-        Commands::Reload => not_yet_implemented(),
+        Commands::Reload => {
+            let cfg = Config::load();
+            rules::reload(&cfg)
+        }
         Commands::Update => not_yet_implemented(),
         Commands::Tui => not_yet_implemented(),
     }

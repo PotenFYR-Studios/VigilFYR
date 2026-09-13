@@ -109,6 +109,7 @@ mod tests {
             action: parse(action),
             severity: Severity::Medium,
             enabled: true,
+            source: String::new(),
         }
     }
 

@@ -57,6 +57,18 @@ pub enum VerdictAction {
     Mask,
 }
 
+impl std::fmt::Display for VerdictAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            VerdictAction::Deny => "deny",
+            VerdictAction::Allow => "allow",
+            VerdictAction::Warn => "warn",
+            VerdictAction::Mask => "mask",
+        };
+        f.write_str(s)
+    }
+}
+
 impl Event {
     pub fn from_reader<R: Read>(r: R) -> serde_json::Result<Event> {
         serde_json::from_reader(r)

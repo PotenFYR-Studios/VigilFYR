@@ -178,16 +178,12 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
                 .spawn()
                 .with_context(|| format!("run extension hook {}", script.display()))?;
             if let Some(mut stdin) = child.stdin.take() {
-                let write_result = std::thread::scope(|scope| {
-                    scope
-                        .spawn(move || {
-                            stdin.write_all(record_json.as_bytes())?;
-                            stdin.flush()
-                        })
-                        .join()
-                        .unwrap_or_else(|_| Err(std::io::Error::other("hook writer panicked")))
+                std::thread::scope(|scope| {
+                    scope.spawn(move || {
+                        let _ = stdin.write_all(record_json.as_bytes());
+                        let _ = stdin.flush();
+                    });
                 });
-                write_result?;
             }
             let output = wait_timeout(&mut child, Duration::from_millis(500))?;
             if output.status.code() == Some(2)

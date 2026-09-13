@@ -140,13 +140,17 @@ fn masking_opt_in_flips_env_read_to_mask() {
 #[test]
 fn installer_dry_run_prints_plan_without_writes() {
     let (program, script) = if cfg!(windows) {
-        ("powershell", "-File")
+        ("powershell.exe", "-NoProfile")
     } else {
         ("sh", "install.sh")
     };
     let mut command = Command::new(program);
     if cfg!(windows) {
-        command.arg(script).arg("install.ps1");
+        command
+            .arg(script)
+            .arg("-File")
+            .arg("install.ps1")
+            .arg("-DryRun");
     } else {
         command.arg(script);
     }

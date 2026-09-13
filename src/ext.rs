@@ -166,7 +166,12 @@ pub fn extension_patterns(extensions: &[Extension]) -> Result<Vec<crate::mask::M
 
 pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<Option<String>> {
     for ext in extensions {
-        for script_name in ["on-event.sh", "on-event.exe", "on-event.ps1"] {
+        let hook_scripts: &[&str] = if cfg!(windows) {
+            &["on-event.exe", "on-event.ps1", "on-event.sh"]
+        } else {
+            &["on-event.sh"]
+        };
+        for script_name in hook_scripts {
             let script = ext.root.join("hooks").join(script_name);
             if !script.is_file() {
                 continue;

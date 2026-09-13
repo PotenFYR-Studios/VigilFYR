@@ -4,6 +4,7 @@ mod cmd;
 
 use cmd::intercept;
 use cmd::rules;
+use cmd::shim;
 use vigil::config::Config;
 
 #[derive(Parser)]
@@ -19,6 +20,9 @@ enum Commands {
     Daemon,
     /// Evaluate an event from stdin and print a verdict (agent hooks call this)
     Intercept(intercept::InterceptArgs),
+    /// Run a command under Vigil's filesystem monitoring wrapper
+    /// (monitoring only — hooks enforce)
+    Shim(shim::ShimArgs),
     /// Interactive setup
     Setup,
     /// Manage rules
@@ -72,6 +76,10 @@ fn main() -> anyhow::Result<()> {
     match cli.command.unwrap_or(Commands::Tui) {
         Commands::Daemon => not_yet_implemented(),
         Commands::Intercept(args) => intercept::intercept(args),
+        Commands::Shim(args) => {
+            let cmd = args.command.clone();
+            shim::shim(args, &cmd)
+        }
         Commands::Setup => not_yet_implemented(),
         Commands::Rules(cmd) => {
             let cfg = Config::load();

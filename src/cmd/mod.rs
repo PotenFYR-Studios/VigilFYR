@@ -3,3 +3,4 @@
 pub mod agents;
 pub mod intercept;
 pub mod rules;
+pub mod shim;

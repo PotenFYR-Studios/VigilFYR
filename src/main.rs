@@ -27,13 +27,20 @@ enum Commands {
     /// Manage configuration
     Config,
     /// Manage agents
-    Agents,
+    #[command(subcommand)]
+    Agents(AgentsCommands),
     /// Reload daemon state
     Reload,
     /// Self-update
     Update,
     /// Launch the TUI (default)
     Tui,
+}
+
+#[derive(Subcommand)]
+enum AgentsCommands {
+    /// List known agents and detection status
+    List,
 }
 
 #[derive(Subcommand)]
@@ -65,7 +72,24 @@ fn main() -> anyhow::Result<()> {
             }
         }
         Commands::Config => not_yet_implemented(),
-        Commands::Agents => not_yet_implemented(),
+        Commands::Agents(cmd) => match cmd {
+            AgentsCommands::List => {
+                let known = vigil::agents::all_agents();
+                let detected = vigil::agents::detect_agents();
+                println!("{:<12} {:<28} {:<9} {}", "ID", "AGENT", "HOOKS", "DETECTED");
+                for a in &known {
+                    let det = detected.iter().any(|d| d.id == a.id);
+                    println!(
+                        "{:<12} {:<28} {:<9} {}",
+                        a.id,
+                        a.display,
+                        if a.supports_hooks { "yes" } else { "no" },
+                        if det { "yes" } else { "no" }
+                    );
+                }
+                Ok(())
+            }
+        },
         Commands::Reload => {
             let cfg = Config::load();
             rules::reload(&cfg)

@@ -1,0 +1,28 @@
+# vigil built-in masking patterns. Embedded via include_str!; users add
+# more by dropping patterns/*.toml into ~/.vigil/rules/patterns/.
+# Replacement keeps the first 4 chars of each match, bullets the rest,
+# and appends "(masked)".
+
+[[pattern]]
+name = "aws_key"
+regex = 'AKIA[0-9A-Z]{16}'
+
+[[pattern]]
+name = "github_pat"
+regex = 'gh[pousr]_[A-Za-z0-9]{36,}'
+
+[[pattern]]
+name = "openai_key"
+regex = 'sk-[A-Za-z0-9_-]{20,}'
+
+[[pattern]]
+name = "jwt"
+regex = 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'
+
+[[pattern]]
+name = "private_key"
+regex = '(?s)-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----'
+
+[[pattern]]
+name = "env_values"
+regex = '(?im)^[A-Z_0-9]*(?i:secret|token|password|api_?key)[A-Z_0-9]*=.*$'

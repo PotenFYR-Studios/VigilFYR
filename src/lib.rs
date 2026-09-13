@@ -4,5 +4,6 @@ pub mod agents;
 pub mod config;
 pub mod engine;
 pub mod event;
+pub mod mask;
 pub mod rules;
 pub mod sync;

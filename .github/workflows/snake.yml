@@ -39,6 +39,6 @@ jobs:
           git config user.email "actions@github.com"
           git switch --orphan output-new
           cp dist/github-snake.svg dist/github-snake-dark.svg .
-          git add .
+          git add github-snake.svg github-snake-dark.svg
           git commit -m "snake: update"
-          git push origin HEAD:output
+          git push --force origin HEAD:output

@@ -177,13 +177,17 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
                 .stderr(Stdio::null())
                 .spawn()
                 .with_context(|| format!("run extension hook {}", script.display()))?;
-            if let Some(mut stdin) = child.stdin.take() {
-                std::thread::scope(|scope| {
-                    scope.spawn(move || {
-                        let _ = stdin.write_all(record_json.as_bytes());
-                        let _ = stdin.flush();
-                    });
-                });
+            if let Some(stdin) = child.stdin.as_mut() {
+                let record_length = record_json.len();
+                let mut written = 0;
+                while written < record_length {
+                    match stdin.write(&record_json.as_bytes()[written..]) {
+                        Ok(0) => break,
+                        Ok(count) => written += count,
+                        Err(error) if error.kind() == std::io::ErrorKind::BrokenPipe => break,
+                        Err(error) => return Err(error.into()),
+                    }
+                }
             }
             let output = wait_timeout(&mut child, Duration::from_millis(500))?;
             if output.status.code() == Some(2)

@@ -171,7 +171,14 @@ pub fn apply_event_hooks(extensions: &[Extension], record_json: &str) -> Result<
             if !script.is_file() {
                 continue;
             }
-            let mut child = Command::new(&script)
+            let mut command = if cfg!(windows) && script_name.ends_with(".sh") {
+                let mut command = Command::new("bash");
+                command.arg(&script);
+                command
+            } else {
+                Command::new(&script)
+            };
+            let mut child = command
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::null())

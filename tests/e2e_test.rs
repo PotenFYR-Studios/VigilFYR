@@ -139,8 +139,18 @@ fn masking_opt_in_flips_env_read_to_mask() {
 
 #[test]
 fn installer_dry_run_prints_plan_without_writes() {
-    let output = Command::new("sh")
-        .arg("install.sh")
+    let (program, script) = if cfg!(windows) {
+        ("powershell", "-File")
+    } else {
+        ("sh", "install.sh")
+    };
+    let mut command = Command::new(program);
+    if cfg!(windows) {
+        command.arg(script).arg("install.ps1");
+    } else {
+        command.arg(script);
+    }
+    let output = command
         .arg("--dry-run")
         .env("HOME", std::env::temp_dir())
         .output()

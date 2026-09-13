@@ -36,6 +36,7 @@ mod tests {
 
     #[test]
     fn creates_and_removes_linux_autostart_entry() {
+        let _guard = crate::env_lock();
         let old = std::env::var_os("HOME");
         let home = std::env::temp_dir().join(format!("vigil-tray-{}", std::process::id()));
         std::env::set_var("HOME", &home);

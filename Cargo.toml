@@ -32,3 +32,4 @@ tokio = { version = "1", features = ["full"] }
 chrono = { version = "0.4", features = ["serde"] }
 ratatui = "0.30"
 crossterm = "0.28"
+sha2 = "0.10"

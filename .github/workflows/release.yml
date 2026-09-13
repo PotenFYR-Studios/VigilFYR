@@ -18,9 +18,19 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             platform: linux
+            deb_arch: amd64
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
             platform: linux
+            deb_arch: arm64
+          - target: armv7-unknown-linux-gnueabihf
+            os: ubuntu-latest
+            platform: linux
+            deb_arch: armhf
+          - target: riscv64gc-unknown-linux-gnu
+            os: ubuntu-latest
+            platform: linux
+            deb_arch: riscv64
           - target: x86_64-apple-darwin
             os: macos-latest
             platform: macos
@@ -30,6 +40,8 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             platform: windows
+    env:
+      VER: ""
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -41,32 +53,119 @@ jobs:
         if: runner.os == 'Linux'
       - run: cargo build --release --target ${{ matrix.target }}
         if: runner.os != 'Linux'
-      - name: Package
+
+      - name: Derive version
+        shell: bash
+        run: |
+          case "${GITHUB_REF_NAME:-}" in
+            v[0-9]*) VER="${GITHUB_REF_NAME#v}" ;;
+            *) VER="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)" ;;
+          esac
+          echo "VER=$VER" >> "$GITHUB_ENV"
+          echo "version: $VER"
+
+      - name: Package (tarball)
         shell: bash
         run: |
           mkdir -p dist/vigil
-          cp "target/${{ matrix.target }}/release/vigil"* dist/vigil/ || true
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "target/${{ matrix.target }}/release/vigil.exe" dist/vigil/
+          else
+            cp "target/${{ matrix.target }}/release/vigil"* dist/vigil/ || true
+          fi
           tar -czf "vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz" -C dist vigil
-        if: runner.os != 'Windows'
-      - name: Package (Windows)
+
+      - name: Build .deb (Linux)
+        if: runner.os == 'Linux'
         shell: bash
+        run: |
+          PKG="pkg/vigil-$VER"
+          mkdir -p "$PKG/DEBIAN" "$PKG/usr/bin"
+          cp "target/${{ matrix.target }}/release/vigil" "$PKG/usr/bin/vigil"
+          cat > "$PKG/DEBIAN/control" <<EOF
+          Package: vigil
+          Version: $VER
+          Section: utils
+          Priority: optional
+          Architecture: ${{ matrix.deb_arch }}
+          Maintainer: PotenFYR Studios <studios@potenfyr.in>
+          Description: AI-agent guard CLI
+           Blocks AI coding agents from reading, writing, searching, or
+           executing in sensitive paths, with a live TUI report.
+          EOF
+          dpkg-deb --build --root-owner-group "$PKG" "vigil-${{ matrix.platform }}-${VER}-${{ matrix.deb_arch }}.deb"
+        continue-on-error: true
+
+      - name: Build .pkg (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p pkgroot/usr/local/bin
+          cp "target/${{ matrix.target }}/release/vigil" pkgroot/usr/local/bin/vigil
+          pkgbuild \
+            --root pkgroot \
+            --identifier in.potenfyr.vigil \
+            --version "$VER" \
+            --install-location /usr/local/bin \
+            "vigil-${{ matrix.platform }}-${VER}.pkg"
+        continue-on-error: true
+
+      - name: Build .msi (Windows)
         if: runner.os == 'Windows'
+        shell: bash
         run: |
-          mkdir -p dist/vigil
-          cp "target/${{ matrix.target }}/release/vigil.exe" dist/vigil/
-          tar -czf "vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz" -C dist vigil
+          dotnet tool install --global wix
+          dotnet_tool_path="$(cd "$HOME/.dotnet/tools" && pwd)"
+          export PATH="$dotnet_tool_path:$PATH"
+          mkdir -p msi/Vigil
+          cp "target/${{ matrix.target }}/release/vigil.exe" msi/Vigil/
+          cat > msi/vigil.wxs <<EOF
+          <Wix xmlns="http://wixtoolset.org/schemas/v4">
+            <Package Name="Vigil" Manufacturer="PotenFYR Studios" Version="$VER"
+                     UpgradeCode="be4cd514-c39d-4321-9e6f-87d8b0ec7248"
+                     Scope="perUser" Compressed="yes" Language="1033">
+              <MajorUpgrade DowngradeErrorMessage="A newer version of Vigil is already installed." />
+              <Feature Id="Main" Level="1">
+                <ComponentGroupRef Id="VigilBin" />
+              </Feature>
+              <StandardDirectory Id="LocalAppDataFolder">
+                <Directory Id="ProgramsDir" Name="Programs">
+                  <Directory Id="INSTALLFOLDER" Name="Vigil" />
+                </Directory>
+              </StandardDirectory>
+              <ComponentGroup Id="VigilBin">
+                <Component Directory="INSTALLFOLDER">
+                  <File Id="VigilExe" Source="Vigil/vigil.exe" />
+                  <Environment Id="PATH" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="no" />
+                </Component>
+              </ComponentGroup>
+            </Package>
+          </Wix>
+          EOF
+          wix build msi/vigil.wxs -o "vigil-${{ matrix.platform }}-${VER}-x86_64.msi"
+        continue-on-error: true
+
       - name: Checksum
         shell: bash
         run: |
-          ARTIFACT="vigil-${{ matrix.platform }}-${{ matrix.target }}.tar.gz"
-          if command -v sha256sum >/dev/null 2>&1; then
-            sha256sum "$ARTIFACT" > "$ARTIFACT.sha256"
-          else
-            shasum -a 256 "$ARTIFACT" > "$ARTIFACT.sha256"
-          fi
-          cat "$ARTIFACT.sha256"
+          for f in vigil-*.tar.gz vigil-*.deb vigil-*.pkg vigil-*.msi; do
+            [ -e "$f" ] || continue
+            if command -v sha256sum >/dev/null 2>&1; then
+              sha256sum "$f" > "$f.sha256"
+            else
+              shasum -a 256 "$f" > "$f.sha256"
+            fi
+            cat "$f.sha256"
+          done
+
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             vigil-*.tar.gz
             vigil-*.tar.gz.sha256
+            vigil-*.deb
+            vigil-*.deb.sha256
+            vigil-*.pkg
+            vigil-*.pkg.sha256
+            vigil-*.msi
+            vigil-*.msi.sha256

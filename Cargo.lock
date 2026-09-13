@@ -2408,6 +2408,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "sha2",
  "tar",
  "thiserror 2.0.20",
  "tokio",

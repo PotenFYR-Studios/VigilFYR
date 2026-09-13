@@ -8,4 +8,5 @@ pub mod intercept;
 pub mod rules;
 pub mod setup;
 pub mod shim;
+pub mod uninstall;
 pub mod update;

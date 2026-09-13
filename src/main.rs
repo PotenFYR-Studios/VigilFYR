@@ -9,6 +9,7 @@ use cmd::intercept;
 use cmd::rules;
 use cmd::setup;
 use cmd::shim;
+use cmd::uninstall;
 use cmd::update;
 use vigil::config::Config;
 
@@ -59,6 +60,21 @@ enum Commands {
     Reload,
     /// Self-update
     Update(update::UpdateArgs),
+    /// Uninstall Vigil: remove hooks, autostart, and (optionally) state
+    Uninstall {
+        /// Keep ~/.vigil for reuse after reinstall (skips the prompt)
+        #[arg(long)]
+        keep_config: bool,
+        /// Wipe ~/.vigil completely (skips the prompt)
+        #[arg(long)]
+        wipe_config: bool,
+        /// Show what would be removed without changing anything
+        #[arg(long)]
+        dry_run: bool,
+        /// Do not ask any prompts
+        #[arg(long)]
+        yes: bool,
+    },
     /// Launch the TUI (default)
     Tui {
         /// Print one snapshot and exit
@@ -187,6 +203,22 @@ fn main() -> anyhow::Result<()> {
             rules::reload(&cfg)
         }
         Commands::Update(args) => update::run(args),
+        Commands::Uninstall {
+            keep_config,
+            wipe_config,
+            dry_run,
+            yes,
+        } => {
+            uninstall::ensure_not_both(keep_config.then_some(true), wipe_config.then_some(true))?;
+            let keep = if keep_config {
+                Some(true)
+            } else if wipe_config {
+                Some(false)
+            } else {
+                None
+            };
+            uninstall::run(keep, dry_run, yes)
+        }
         Commands::Tui { once } => vigil::tui::run_once(once),
         Commands::Doctor => rules::doctor(),
     }

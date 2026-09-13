@@ -33,6 +33,8 @@ API="https://api.github.com/repos/$REPO/releases/latest"
 case "$OS-$ARCH" in
   linux-x86_64)  TGT="x86_64-unknown-linux-gnu" ;;
   linux-arm64)   TGT="aarch64-unknown-linux-gnu" ;;
+  linux-armv7)   TGT="armv7-unknown-linux-gnueabihf" ;;
+  linux-riscv64) TGT="riscv64gc-unknown-linux-gnu" ;;
   macos-x86_64)  TGT="x86_64-apple-darwin" ;;
   macos-arm64)   TGT="aarch64-apple-darwin" ;;
   *) echo "unsupported platform: $OS-$ARCH (no release artifact)" >&2; exit 1 ;;

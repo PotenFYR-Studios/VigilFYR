@@ -68,16 +68,23 @@ fn version_gt(left: &str, right: &str) -> bool {
 }
 
 pub fn self_update_with_archive(
-    archive: impl Read,
+    mut archive: impl Read,
     expected_checksum: &str,
     binary_name: &str,
 ) -> Result<PathBuf> {
-    let bytes = std::io::read_to_string(archive).context("read update archive")?;
-    let actual = sha256_ascii(bytes.as_bytes());
-    if actual != expected_checksum.trim() {
-        bail!("update checksum mismatch");
+    let mut bytes = Vec::new();
+    archive
+        .read_to_end(&mut bytes)
+        .context("read update archive")?;
+    let actual = sha256_hex(&bytes);
+    let expected = expected_checksum
+        .split_whitespace()
+        .next()
+        .unwrap_or_default();
+    if actual != expected {
+        bail!("update checksum mismatch: expected {expected}, got {actual}");
     }
-    let cursor = std::io::Cursor::new(bytes.into_bytes());
+    let cursor = std::io::Cursor::new(bytes);
     let mut tar = Archive::new(GzDecoder::new(cursor));
     let temp = std::env::temp_dir().join(format!("vigil-update-{}", std::process::id()));
     std::fs::create_dir_all(&temp)?;
@@ -88,6 +95,11 @@ pub fn self_update_with_archive(
     let _ = std::fs::remove_file(&old);
     std::fs::rename(&current, &old)?;
     std::fs::copy(&new_binary, &current)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&current, std::fs::Permissions::from_mode(0o755))?;
+    }
     let _ = std::fs::remove_dir_all(&temp);
     Ok(old)
 }
@@ -102,14 +114,11 @@ fn find_binary(root: &Path, name: &str) -> Result<PathBuf> {
     bail!("update archive did not contain {name}");
 }
 
-fn sha256_ascii(input: &[u8]) -> String {
-    let mut hash = [0u8; 8];
-    for (index, byte) in input.iter().enumerate() {
-        hash[index % hash.len()] = hash[index % hash.len()]
-            .wrapping_mul(31)
-            .wrapping_add(*byte);
-    }
-    hash.iter().map(|byte| format!("{byte:02x}")).collect()
+/// Real SHA-256 hex digest (lowercase) of `input`.
+fn sha256_hex(input: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    let digest = Sha256::digest(input);
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 pub fn check_update() -> Result<UpdateStatus> {

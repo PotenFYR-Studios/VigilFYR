@@ -90,7 +90,12 @@ fn extension_hook_deny_overrides_verdict() {
     } else {
         "#!/bin/sh\nprintf '%s' '{\"action\":\"deny\",\"rule\":\"hook-deny\",\"reason\":\"hook override\"}'\nexit 2\n"
     };
-    std::fs::write(ext.join("hooks/on-event.sh"), hook_script).unwrap();
+    let hook_path = ext.join(if cfg!(windows) {
+        "hooks/on-event.ps1"
+    } else {
+        "hooks/on-event.sh"
+    });
+    std::fs::write(hook_path, hook_script).unwrap();
 
     #[cfg(unix)]
     {

@@ -85,15 +85,15 @@ fn claude_hook_install_is_idempotent() {
     let hook_path = &cc.hook_paths[0];
 
     (cc.install_hook)(hook_path, vigil::engine::Mode::Enforce).unwrap();
-    let once = std::fs::read_to_string(&hook_path).unwrap();
+    let once = std::fs::read_to_string(hook_path).unwrap();
     (cc.install_hook)(hook_path, vigil::engine::Mode::Enforce).unwrap();
-    let twice = std::fs::read_to_string(&hook_path).unwrap();
+    let twice = std::fs::read_to_string(hook_path).unwrap();
     assert_eq!(once, twice, "second install must not duplicate");
     assert!(once.contains("vigil intercept"), "hook command present");
     assert!(once.contains("model"), "existing settings preserved");
 
     (cc.remove_hook)(hook_path).unwrap();
-    let removed = std::fs::read_to_string(&hook_path).unwrap();
+    let removed = std::fs::read_to_string(hook_path).unwrap();
     assert!(!removed.contains("vigil intercept"), "hook removed");
     assert!(removed.contains("model"), "other settings survive removal");
     std::fs::remove_dir_all(&home).ok();

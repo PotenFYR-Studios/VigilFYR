@@ -39,8 +39,18 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum AgentsCommands {
-    /// List known agents and detection status
+    /// List known agents, detection and install status
     List,
+    /// Install/update vigil hooks for an agent (or "all")
+    Install {
+        /// Agent id, or "all" (default: all)
+        agent: Option<String>,
+    },
+    /// Remove vigil hooks for an agent (or "all"); other settings untouched
+    Remove {
+        /// Agent id, or "all" (default: all)
+        agent: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -73,22 +83,9 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Config => not_yet_implemented(),
         Commands::Agents(cmd) => match cmd {
-            AgentsCommands::List => {
-                let known = vigil::agents::all_agents();
-                let detected = vigil::agents::detect_agents();
-                println!("{:<12} {:<28} {:<9} {}", "ID", "AGENT", "HOOKS", "DETECTED");
-                for a in &known {
-                    let det = detected.iter().any(|d| d.id == a.id);
-                    println!(
-                        "{:<12} {:<28} {:<9} {}",
-                        a.id,
-                        a.display,
-                        if a.supports_hooks { "yes" } else { "no" },
-                        if det { "yes" } else { "no" }
-                    );
-                }
-                Ok(())
-            }
+            AgentsCommands::List => cmd::agents::agents_list(),
+            AgentsCommands::Install { agent } => cmd::agents::agents_install(agent.as_deref()),
+            AgentsCommands::Remove { agent } => cmd::agents::agents_remove(agent.as_deref()),
         },
         Commands::Reload => {
             let cfg = Config::load();

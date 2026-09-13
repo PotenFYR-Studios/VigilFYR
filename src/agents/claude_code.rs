@@ -16,18 +16,16 @@ fn detect() -> bool {
     settings_path().is_file()
 }
 
-fn hook_block(mode: Mode) -> serde_json::Value {
+/// Native Claude Code hook shape: hooks.PreToolUse[] entry. Mode is not
+/// encoded here; `vigil intercept` reads it from config at call time.
+fn pre_tool_use_entry() -> serde_json::Value {
     json!({
-        "version": 1,
-        "mode": mode.to_string(),
-        "intercept": {
-            "type": "command",
-            "command": "vigil intercept",
-        }
+        "matcher": "*",
+        "hooks": [{ "type": "command", "command": "vigil intercept --agent claude-code" }]
     })
 }
 
-fn install_hook(path: &Path, mode: Mode) -> Result<()> {
+fn install_hook(path: &Path, _mode: Mode) -> Result<()> {
     if path != settings_path() {
         anyhow::bail!("claude-code hooks install to {}", settings_path().display());
     }
@@ -36,15 +34,16 @@ fn install_hook(path: &Path, mode: Mode) -> Result<()> {
             .with_context(|| format!("creating {}", parent.display()))?;
     }
     let current = std::fs::read_to_string(path).unwrap_or_else(|_| "{}".to_string());
-    let updated = json_settings::set_vigil(&current, &hook_block(mode))
-        .context("merging vigil block into settings.json")?;
+    let updated = json_settings::set_hook_entry(&current, "PreToolUse", &pre_tool_use_entry())
+        .context("merging vigil hook into settings.json")?;
     std::fs::write(path, updated + "\n")?;
     Ok(())
 }
 
 fn remove_hook(path: &Path) -> Result<()> {
     let current = std::fs::read_to_string(path).context("reading settings.json")?;
-    let updated = json_settings::strip_vigil(&current).context("stripping vigil block")?;
+    let updated = json_settings::strip_hook_entries(&current)
+        .context("stripping vigil hook from settings.json")?;
     std::fs::write(path, updated + "\n")?;
     Ok(())
 }

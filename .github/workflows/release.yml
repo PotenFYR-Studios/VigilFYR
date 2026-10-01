@@ -171,7 +171,7 @@ jobs:
             </Package>
           </Wix>
           EOF
-          wix build -arch "${{ matrix.msi_arch }}" msi/vigil.wxs "vigil-windows-$VER-${{ matrix.target }}.msi"
+          wix build -arch "${{ matrix.msi_arch }}" msi/vigil.wxs -o "vigil-windows-$VER-${{ matrix.target }}.msi"
 
       - name: Checksum artifacts
         shell: bash

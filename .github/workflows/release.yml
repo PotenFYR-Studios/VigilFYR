@@ -75,6 +75,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      # cargo-zigbuild shells out to zig, which install-action does not
+      # bundle; every Linux target failed with 'Error: Failed to find zig'.
+      - uses: mlugg/setup-zig@v2
+        if: runner.os == 'Linux'
       - uses: taiki-e/install-action@cargo-zigbuild
         if: runner.os == 'Linux'
       - run: cargo zigbuild --release --target ${{ matrix.target }}
@@ -138,7 +142,9 @@ jobs:
         if: matrix.native_installer == 'msi'
         shell: bash
         run: |
-          dotnet tool install --global wix
+          # WiX v7 requires accepting the Open Source Maintenance Fee EULA;
+          # v6 is the last version without it. Pin until that is decided.
+          dotnet tool install --global wix --version "6.*"
           export PATH="$HOME/.dotnet/tools:$PATH"
           mkdir -p msi
           cp "target/${{ matrix.target }}/release/vigil.exe" msi/vigil.exe

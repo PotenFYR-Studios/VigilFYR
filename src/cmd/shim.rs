@@ -21,6 +21,10 @@ use vigil::event::{Action, VerdictAction};
 use vigil::mask::select_patterns;
 use vigil::sync::load_effective_rules;
 
+/// How long to keep polling the watcher after the child exits before
+/// flushing records (FSEvents delivers late on macOS; see drain loop below).
+const GRACE_DRAIN: Duration = Duration::from_millis(750);
+
 #[derive(Parser)]
 pub struct ShimArgs {
     /// Working directory for the child and the watch root.
@@ -103,18 +107,30 @@ pub fn shim(args: ShimArgs, cmd: &[String]) -> Result<()> {
     loop {
         match child.try_wait()? {
             Some(status) => {
-                while let Ok(res) = rx.try_recv() {
-                    if let Ok(ev) = res {
-                        record_event(
-                            ev,
-                            &ruleset,
-                            mode,
-                            &args.cwd,
-                            args.events,
-                            &patterns,
-                            &mut events_out,
-                        );
+                // Drain the watcher before exiting. FSEvents (macOS) delivers
+                // callbacks asynchronously through its run loop, so the record
+                // for a fast-exiting child can land just after wait() returns;
+                // a single pass lost it. Poll briefly, stopping as soon as an
+                // event is captured so Linux (synchronous inotify) stays fast.
+                let deadline = std::time::Instant::now() + GRACE_DRAIN;
+                loop {
+                    while let Ok(res) = rx.try_recv() {
+                        if let Ok(ev) = res {
+                            record_event(
+                                ev,
+                                &ruleset,
+                                mode,
+                                &args.cwd,
+                                args.events,
+                                &patterns,
+                                &mut events_out,
+                            );
+                        }
                     }
+                    if !events_out.is_empty() || std::time::Instant::now() >= deadline {
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(25));
                 }
                 for line in events_out {
                     println!("{line}");

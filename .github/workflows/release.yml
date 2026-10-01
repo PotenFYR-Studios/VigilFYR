@@ -148,6 +148,10 @@ jobs:
           export PATH="$HOME/.dotnet/tools:$PATH"
           mkdir -p msi
           cp "target/${{ matrix.target }}/release/vigil.exe" msi/vigil.exe
+          # WiX v6 resolves the .wxs Source path from the working directory,
+          # not from the .wxs location - stage the exe at both candidates so
+          # the build works either way (WIX0103 'Cannot find vigil.exe').
+          cp "target/${{ matrix.target }}/release/vigil.exe" vigil.exe
           cat > msi/vigil.wxs <<EOF
           <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
             <Package Name="Vigil" Manufacturer="PotenFYR Studios" Version="$VER"

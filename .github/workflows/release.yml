@@ -149,7 +149,7 @@ jobs:
           mkdir -p msi
           cp "target/${{ matrix.target }}/release/vigil.exe" msi/vigil.exe
           cat > msi/vigil.wxs <<EOF
-          <Wix xmlns="http://wixtoolset.org/schemas/v4">
+          <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
             <Package Name="Vigil" Manufacturer="PotenFYR Studios" Version="$VER"
                      UpgradeCode="be4cd514-c39d-4321-9e6f-87d8b0ec7248"
                      Scope="perUser" Compressed="yes" Language="1033">

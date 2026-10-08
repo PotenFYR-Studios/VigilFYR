@@ -6,7 +6,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/PotenFYR-Studios/VigilFYR/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=CI&labelColor=1c1e26&color=2ea043)](https://github.com/PotenFYR-Studios/VigilFYR/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/PotenFYR-Studios/VigilFYR?style=for-the-badge&logo=github&logoColor=white&label=Release&labelColor=1c1e26&color=eac54f)](https://github.com/PotenFYR-Studios/VigilFYR/releases)
-[![Docs](https://img.shields.io/badge/Docs-vigilfyr.docs.potenfyr.in-8b5cf6?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://vigilfyr.docs.potenfyr.in)
+[![Docs](https://img.shields.io/badge/Docs-docs.potenfyr.in/vigilfyr-8b5cf6?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://docs.potenfyr.in/vigilfyr)
 [![License](https://img.shields.io/badge/License-Apache--2.0%20%2B%20Commons%20Clause-2ea043?style=for-the-badge&logo=apache&logoColor=white&labelColor=1c1e26)](https://github.com/PotenFYR-Studios/VigilFYR/blob/master/LICENSE)
 [![Platforms](https://img.shields.io/badge/Platforms-linux%20%7C%20macOS%20%7C%20Windows-0ea5e9?style=for-the-badge&logo=linux&logoColor=white&labelColor=1c1e26)](#-platform-support)
 [![View](https://komarev.com/ghpvc/?username=PotenFYR-Studios-VigilFYR&color=ec4899&style=for-the-badge&label=VIEW&labelColor=1c1e26)](https://github.com/PotenFYR-Studios/VigilFYR)
@@ -323,7 +323,7 @@ Authoring guide: [Extensions](docs/extensions.md).
 ## 📚 Documentation
 
 Full documentation lives in [docs/](docs/) and is published to the
-[vigilfyr.docs.potenfyr.in](https://vigilfyr.docs.potenfyr.in) with
+[docs.potenfyr.in/vigilfyr](https://docs.potenfyr.in/vigilfyr) with
 installation, rules, masking, agents matrix, daemon, extensions and
 security-model guides. Built with Vite, React, TypeScript, Bun and Magic UI
 components (`docs/web/`), statically generated and auto-deployed on every
@@ -421,7 +421,7 @@ are fine. Questions or a commercial exception: [contact the org](https://potenfy
 [![GitHub](https://img.shields.io/badge/GitHub-PotenFYR--Studios-181717?style=for-the-badge&logo=github&logoColor=white&labelColor=1c1e26)](https://github.com/PotenFYR-Studios)
 [![Website](https://img.shields.io/badge/Website-potenfyr.in-8b5cf6?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=1c1e26)](https://potenfyr.in/)
 [![Community](https://img.shields.io/badge/Community-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=1c1e26)](https://discord.com/invite/zUaN2FPBec)
-[![Docs](https://img.shields.io/badge/Docs-vigilfyr.docs.potenfyr.in-0ea5e9?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://vigilfyr.docs.potenfyr.in)
+[![Docs](https://img.shields.io/badge/Docs-docs.potenfyr.in/vigilfyr-0ea5e9?style=for-the-badge&logo=readme&logoColor=white&labelColor=1c1e26)](https://docs.potenfyr.in/vigilfyr)
 
 <!-- markdownlint-disable -->
 <div align="center">
